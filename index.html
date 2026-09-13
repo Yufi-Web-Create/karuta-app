@@ -91,8 +91,12 @@
         </div>
       </div>
 
-      <div class="w-full max-w-xs flex items-center space-x-2 px-2 py-1 bg-stone-800/60 rounded border border-stone-700/50">
-        <div class="flex items-center space-x-1 text-[11px] text-stone-400 w-16"><span id="micRecordDot" class="w-2 h-2 rounded-full bg-stone-600"></span><span id="micStatusText">待機</span></div>
+      <!-- マイク事前設定ボタン ＆ 音量メーター -->
+      <div class="w-full max-w-xs flex items-center space-x-2 px-2 py-1.5 bg-stone-800/60 rounded border border-stone-700/50">
+        <button id="prepareMicBtn" class="text-[11px] px-2 py-1 rounded bg-stone-700 hover:bg-stone-600 text-stone-200 font-semibold active:scale-95 transition-all flex items-center space-x-1 shrink-0">
+          <span id="micRecordDot" class="w-2 h-2 rounded-full bg-stone-500"></span>
+          <span id="micStatusText">マイク準備</span>
+        </button>
         <div class="flex-1 bg-stone-900 h-2 rounded-full overflow-hidden flex items-center p-0.5"><div id="volumeBar" class="h-full bg-emerald-500 rounded-full transition-all duration-75" style="width: 0%;"></div></div>
         <span id="totalTimeElapsed" class="font-mono text-xs text-stone-400 w-12 text-right">0.0s</span>
       </div>
@@ -312,7 +316,7 @@
     });
 
     let currentCardIndex = 0;
-    let prevCardIndex = 1; // 前歌のインデックス
+    let prevCardIndex = 1;
     let practiceSequence = [...Array(HYAKUNIN_ISSHU.length).keys()], sequenceCursor = 0;
 
     let savedTimes = null;
@@ -321,6 +325,7 @@
 
     let currentPhase = 'idle', phaseStartTime = 0, timerAnimFrame = null;
     let audioCtx = null, micStream = null, mediaRecorder = null, recordedChunks = [], lastAudioBlob = null, analyserNode = null, animVolumeFrame = null, isRecording = false;
+    let isMicReady = false;
 
     let currentFilterType = 'all';
     let currentSearchKeyword = '';
@@ -333,7 +338,7 @@
     const resetPoemBtn = document.getElementById('resetPoemBtn'), nextCardBtn = document.getElementById('nextCardBtn');
     const phaseLabel = document.getElementById('phaseLabel'), phaseTimerText = document.getElementById('phaseTimerText'), phaseTargetSub = document.getElementById('phaseTargetSub');
     const progressCircle = document.getElementById('progressCircle'), volumeBar = document.getElementById('volumeBar'), totalTimeElapsed = document.getElementById('totalTimeElapsed');
-    const micRecordDot = document.getElementById('micRecordDot'), micStatusText = document.getElementById('micStatusText');
+    const prepareMicBtn = document.getElementById('prepareMicBtn'), micRecordDot = document.getElementById('micRecordDot'), micStatusText = document.getElementById('micStatusText');
     const reviewPanel = document.getElementById('reviewPanel'), recordedDurationText = document.getElementById('recordedDurationText');
     const playMyAudioBtn = document.getElementById('playMyAudioBtn'), requestAiFeedbackBtn = document.getElementById('requestAiFeedbackBtn');
     const openAiGuideBtn = document.getElementById('openAiGuideBtn'), poetSpeechBubble = document.getElementById('poetSpeechBubble');
@@ -345,7 +350,6 @@
     const prevCardBadge = document.getElementById('prevCardBadge'), prevShimoText = document.getElementById('prevShimoText');
     const poemMiniSummary = document.getElementById('poemMiniSummary'), poemTranslation = document.getElementById('poemTranslation'), poemReadingTip = document.getElementById('poemReadingTip'), shuffledCountText = document.getElementById('shuffledCountText');
 
-    // 前歌を現在の歌以外からランダム選定
     function pickRandomPrevCard(currentIdx) {
       let candidateIdx;
       do {
@@ -361,7 +365,6 @@
       kamiText.textContent = card.kami;
       shimoText.textContent = card.shimo;
 
-      // 前歌
       prevCardBadge.textContent = prevCard.no === '序' ? '序歌' : `第${prevCard.no}首 (${prevCard.author})`;
       prevShimoText.textContent = prevCard.shimo;
 
@@ -401,19 +404,68 @@
       progressCircle.style.strokeDashoffset = 0;
       progressCircle.setAttribute('stroke', '#a855f7');
 
-      // 本文ハイライト解除
       kamiText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
       shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
       prevShimoText.className = 'text-sm font-mincho font-semibold text-stone-700 pl-1';
 
       mainActionBtn.className = 'w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-blue-600 active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
       mainActionBtn.innerHTML = `<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>読唱開始</span>`;
-      micRecordDot.className = 'w-2 h-2 rounded-full bg-stone-600';
-      micStatusText.textContent = '待機';
+      
+      updateMicStatusUi();
     }
 
-    function startPractice() {
+    function updateMicStatusUi() {
+      if (isRecording) {
+        micRecordDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-ping';
+        micStatusText.textContent = '録音中';
+      } else if (isMicReady) {
+        micRecordDot.className = 'w-2 h-2 rounded-full bg-emerald-400';
+        micStatusText.textContent = 'マイクOK';
+        prepareMicBtn.className = 'text-[11px] px-2 py-1 rounded bg-emerald-950/80 border border-emerald-700 text-emerald-300 font-semibold active:scale-95 transition-all flex items-center space-x-1 shrink-0';
+      } else {
+        micRecordDot.className = 'w-2 h-2 rounded-full bg-stone-500';
+        micStatusText.textContent = 'マイク準備';
+        prepareMicBtn.className = 'text-[11px] px-2 py-1 rounded bg-stone-700 hover:bg-stone-600 text-stone-200 font-semibold active:scale-95 transition-all flex items-center space-x-1 shrink-0';
+      }
+    }
+
+    // マイクの事前初期化
+    async function setupMicrophone() {
+      try {
+        micStatusText.textContent = '接続中...';
+        if (!micStream) {
+          micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        }
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+        const source = audioCtx.createMediaStreamSource(micStream);
+        analyserNode = audioCtx.createAnalyser();
+        analyserNode.fftSize = 256;
+        source.connect(analyserNode);
+        monitorVolume();
+
+        isMicReady = true;
+        updateMicStatusUi();
+        return true;
+      } catch (err) {
+        isMicReady = false;
+        micRecordDot.className = 'w-2 h-2 rounded-full bg-red-600';
+        micStatusText.textContent = 'マイク許可要';
+        alert('マイクの利用が許可されていないか、利用できません。ブラウザ設定からマイクを許可してください。');
+        return false;
+      }
+    }
+
+    async function startPractice() {
       if (currentPhase === 'idle' || currentPhase === 'finished') {
+        if (!isMicReady) {
+          const ok = await setupMicrophone();
+          if (!ok) return;
+        }
         startRecording();
         startPhase('prev_shimo');
       } else {
@@ -434,7 +486,6 @@
       phaseLabel.className = 'text-[11px] font-bold tracking-tight text-amber-400 text-center leading-tight';
     }
 
-    // 7段階フェーズ移行（前歌 下の句 ➔ 余韻 ➔ 間合い ➔ 本歌 上の句 ➔ 余韻 ➔ 間合い ➔ 本歌 下の句）
     function startPhase(phase) {
       if (timerAnimFrame) {
         cancelAnimationFrame(timerAnimFrame);
@@ -443,7 +494,6 @@
       currentPhase = phase;
       phaseStartTime = performance.now();
 
-      // 短冊内のハイライトリセット
       prevShimoText.className = 'text-sm font-mincho font-semibold text-stone-700 pl-1';
       kamiText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
       shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
@@ -545,15 +595,9 @@
       poetSpeechBubble.classList.remove('hidden');
     }
 
-    async function startRecording() {
+    function startRecording() {
       recordedChunks = [];
       try {
-        if (!micStream) micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') await audioCtx.resume();
-        const source = audioCtx.createMediaStreamSource(micStream);
-        analyserNode = audioCtx.createAnalyser(); analyserNode.fftSize = 256;
-        source.connect(analyserNode); monitorVolume();
         const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
         mediaRecorder = new MediaRecorder(micStream, { mimeType: mime });
         mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
@@ -563,15 +607,19 @@
           const totalTarget = (targetTimes.shimo * 2) + (targetTimes.yoin * 2) + (targetTimes.maai * 2) + targetTimes.kami;
           recordedDurationText.textContent = `${totalTarget.toFixed(1)}s (通し)`;
         };
-        mediaRecorder.start(); isRecording = true;
-        micRecordDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-ping'; micStatusText.textContent = '録音中';
-      } catch (err) { micStatusText.textContent = 'マイク無'; }
+        mediaRecorder.start();
+        isRecording = true;
+        updateMicStatusUi();
+      } catch (err) {
+        console.error(err);
+      }
     }
 
     function stopRecording() {
       if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
-      isRecording = false; cancelAnimationFrame(animVolumeFrame); volumeBar.style.width = '0%';
-      micRecordDot.className = 'w-2 h-2 rounded-full bg-stone-600'; micStatusText.textContent = '待機';
+      isRecording = false;
+      volumeBar.style.width = '0%';
+      updateMicStatusUi();
     }
 
     function monitorVolume() {
@@ -763,6 +811,8 @@
       valShimo.textContent = `${targetTimes.shimo.toFixed(1)}s`;
       saveAndApplyTimes();
     });
+
+    prepareMicBtn.addEventListener('click', setupMicrophone);
 
     mainActionBtn.addEventListener('click', () => {
       if (currentPhase === 'finished') {
