@@ -12,9 +12,6 @@
     .writing-vertical { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.16em; }
     .tanzaku-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3); }
     .rakkan-seal { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 2px solid #b91c1c; color: #b91c1c; font-family: 'Shippori Mincho', serif; font-weight: 800; font-size: 14px; line-height: 1.1; border-radius: 6px; transform: rotate(-6deg); background-color: rgba(254, 226, 226, 0.9); box-shadow: 1px 2px 4px rgba(0,0,0,0.15); }
-    .carousel-track { display: flex; transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1); width: 100%; will-change: transform; }
-    .card-slide { min-width: 82%; flex-shrink: 0; margin: 0 9%; transition: opacity 0.4s ease, transform 0.4s ease; }
-    .card-slide.inactive { opacity: 0.35; transform: scale(0.92); filter: blur(0.5px); }
   </style>
 </head>
 <body class="bg-stone-900 text-stone-100 min-h-screen overflow-y-auto selection:bg-amber-800 selection:text-white" id="mainContainer">
@@ -33,15 +30,24 @@
     </header>
 
     <main class="flex-1 flex flex-col items-center justify-center my-1.5 relative w-full overflow-hidden">
-      <!-- 腕試しモード用首数設定バー（腕試し時のみ表示） -->
-      <div id="trialSettingsBar" class="w-full max-w-xs flex justify-between items-center px-2 py-1 mb-1 text-xs bg-amber-950/40 border border-amber-800/40 rounded hidden">
-        <span class="text-amber-400 font-bold">試合首数:</span>
-        <div class="flex space-x-1">
-          <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="5">5首</button>
-          <button class="trial-count-btn px-2 py-0.5 rounded bg-amber-800 text-white text-[11px] font-bold" data-count="10">10首</button>
-          <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="25">25首</button>
-          <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="50">50首</button>
-          <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="100">100首</button>
+      <!-- 腕試しモード用設定バー（選曲タイプ＆首数設定） -->
+      <div id="trialSettingsBar" class="w-full max-w-xs p-2 mb-1 text-xs bg-amber-950/40 border border-amber-800/50 rounded space-y-1.5 hidden">
+        <div class="flex items-center justify-between">
+          <span class="text-amber-300 font-bold">選曲方式:</span>
+          <div class="flex space-x-1">
+            <button id="trialTypeRandomBtn" class="px-2 py-0.5 rounded bg-amber-800 text-white font-bold text-[11px]">ランダム</button>
+            <button id="trialTypeSelectedBtn" class="px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]">選んだ歌 (<span id="selectedCountBadge">0</span>)</button>
+          </div>
+        </div>
+        <div id="trialCountSelectorRow" class="flex items-center justify-between pt-1 border-t border-amber-900/40">
+          <span class="text-stone-400 text-[11px]">試合首数:</span>
+          <div class="flex space-x-1">
+            <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="5">5首</button>
+            <button class="trial-count-btn px-2 py-0.5 rounded bg-amber-800 text-white text-[11px] font-bold" data-count="10">10首</button>
+            <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="25">25首</button>
+            <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="50">50首</button>
+            <button class="trial-count-btn px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]" data-count="100">100首</button>
+          </div>
         </div>
       </div>
 
@@ -51,56 +57,45 @@
         </button>
         <div class="flex items-center space-x-2">
           <span id="trialProgressBadge" class="bg-amber-900/60 text-amber-300 border border-amber-700/50 px-2 py-0.5 rounded text-[11px] font-bold hidden">1 / 10首</span>
-          <span id="kimarijiBadge" class="bg-amber-950/60 text-amber-300 border border-amber-800/50 px-2 py-0.5 rounded text-xs font-bold tracking-wide">難波津</span>
+          <span id="kimarijiBadge" class="bg-amber-950/60 text-amber-300 border border-amber-800/50 px-2.5 py-0.5 rounded text-xs font-bold tracking-wide">難波津</span>
         </div>
       </div>
 
-      <!-- 横スライド式 カルーセルコンテナ（右：前歌、中央：本歌、左：次歌） -->
-      <div class="relative w-full overflow-hidden py-1">
-        <div id="carouselTrack" class="carousel-track flex items-center justify-center">
+      <!-- 3面短冊コンテナ（左：前歌、中央：本歌、右：次歌） -->
+      <div class="w-full max-w-md flex items-stretch justify-center gap-1.5 px-1 py-1">
+        <div class="w-16 bg-[#efe6d8] text-stone-600 rounded p-1.5 border border-stone-400/80 flex flex-col justify-between opacity-50 shrink-0 select-none">
+          <div class="text-[9px] font-bold text-stone-500 border-b border-stone-300 pb-0.5">◀ 前歌</div>
+          <div class="flex justify-center items-center h-32 overflow-hidden">
+            <div class="text-[10px] font-mincho writing-vertical tracking-tight truncate text-stone-600" id="slidePrevShimo">わが衣手は 露にぬれつつ</div>
+          </div>
+          <div class="text-[8px] font-mono text-center text-stone-400 truncate" id="slidePrevBadge">1首</div>
+        </div>
+
+        <div id="cardSlideCurrent" class="flex-1 bg-[#f4ede2] text-stone-900 rounded-lg p-3 tanzaku-shadow border-2 border-stone-300 flex flex-col justify-between relative overflow-hidden" style="min-height: 220px;">
+          <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#6b46c1 0.75px, transparent 0.75px); background-size: 12px 12px;"></div>
           
-          <!-- 前歌短冊（右側） -->
-          <div id="cardSlidePrev" class="card-slide inactive bg-[#efe6d8] text-stone-700 rounded-lg p-3 tanzaku-shadow border border-stone-400 flex flex-col justify-between" style="min-height: 220px;">
-            <div class="flex justify-between items-center text-[10px] pb-1 border-b border-stone-300"><span class="font-bold text-stone-600">◀ 読了・前歌</span><span id="slidePrevBadge" class="font-mono">第1首</span></div>
-            <div class="flex flex-row-reverse justify-around items-stretch h-36 py-1">
-              <div class="flex flex-col justify-start text-sm font-mincho font-bold writing-vertical tracking-widest text-stone-600" id="slidePrevKami">秋の田の かりほの庵の 苫をあらみ</div>
-              <div class="flex flex-col justify-start text-sm font-mincho font-bold writing-vertical tracking-widest text-stone-600" id="slidePrevShimo">わが衣手は 露にぬれつつ</div>
-            </div>
-            <div class="text-[10px] text-right text-stone-500" id="slidePrevAuthor">天智天皇</div>
+          <div class="pb-1 mb-1.5 border-b border-dashed border-stone-400/80 z-10 flex items-center justify-between">
+            <div class="text-[10px] text-stone-500 font-bold">◀ 読出:</div>
+            <div id="prevShimoText" class="text-xs font-mincho font-bold text-stone-700 truncate max-w-[190px]">わが衣手は 露にぬれつつ</div>
+            <span id="prevCardBadge" class="bg-stone-300/80 text-stone-700 px-1 rounded font-mono text-[9px]">1首</span>
           </div>
 
-          <!-- 本歌短冊（中央・メイン） -->
-          <div id="cardSlideCurrent" class="card-slide bg-[#f4ede2] text-stone-900 rounded-lg p-3.5 tanzaku-shadow border-2 border-stone-300 flex flex-col justify-between relative" style="min-height: 220px;">
-            <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#6b46c1 0.75px, transparent 0.75px); background-size: 12px 12px;"></div>
-            
-            <!-- 前歌下の句リマインドエリア -->
-            <div class="pb-1.5 mb-1.5 border-b border-dashed border-stone-400/80 z-10 flex items-center justify-between">
-              <div class="text-[10px] text-stone-500 font-bold">◀ 読出(前歌):</div>
-              <div id="prevShimoText" class="text-xs font-mincho font-bold text-stone-700 truncate max-w-[180px]">わが衣手は 露にぬれつつ</div>
-              <span id="prevCardBadge" class="bg-stone-300/80 text-stone-700 px-1 py-0.2 rounded font-mono text-[9px]">1首</span>
-            </div>
-
-            <!-- 本歌 縦書き（右から左） -->
-            <div class="flex flex-row-reverse justify-around items-stretch h-36 py-1 px-1 z-10">
-              <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="kamiText">難波津に 咲くやこの花</div>
-              <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="shimoText">冬ごもり 今を春べと 咲くやこの花</div>
-              <div class="flex flex-col justify-end text-[11px] font-mincho text-stone-500 writing-vertical py-1 border-r border-stone-300/80 pr-1.5"><span id="cardAuthor">王仁</span></div>
-            </div>
-
-            <div id="rakkanStampContainer" class="absolute left-2.5 top-10 pointer-events-none z-20 hidden"><div id="rakkanStamp" class="rakkan-seal">達人</div></div>
-            <div class="text-[9px] text-stone-500 text-right pt-1 border-t border-stone-300/60 z-10 flex justify-between items-center"><span id="shuffledCountText" class="text-stone-400">1 / 101首</span><span class="text-stone-500">競技かるた 正式読唱規程</span></div>
+          <div class="flex flex-row-reverse justify-around items-stretch h-36 py-1 px-1 z-10">
+            <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="kamiText">難波津に 咲くやこの花</div>
+            <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="shimoText">冬ごもり 今を春べと 咲くやこの花</div>
+            <div class="flex flex-col justify-end text-[11px] font-mincho text-stone-500 writing-vertical py-1 border-r border-stone-300/80 pr-1.5"><span id="cardAuthor">王仁</span></div>
           </div>
 
-          <!-- 次歌短冊（左側・チラ見え） -->
-          <div id="cardSlideNext" class="card-slide inactive bg-[#efe6d8] text-stone-700 rounded-lg p-3 tanzaku-shadow border border-stone-400 flex flex-col justify-between" style="min-height: 220px;">
-            <div class="flex justify-between items-center text-[10px] pb-1 border-b border-stone-300"><span class="font-bold text-stone-600">次歌予告 ▶</span><span id="slideNextBadge" class="font-mono">第2首</span></div>
-            <div class="flex flex-row-reverse justify-around items-stretch h-36 py-1">
-              <div class="flex flex-col justify-start text-sm font-mincho font-bold writing-vertical tracking-widest text-stone-600" id="slideNextKami">春すぎて 夏来にけらし 白妙の</div>
-              <div class="flex flex-col justify-start text-sm font-mincho font-bold writing-vertical tracking-widest text-stone-600" id="slideNextShimo">衣ほすてふ 天の香具山</div>
-            </div>
-            <div class="text-[10px] text-right text-stone-500" id="slideNextAuthor">持統天皇</div>
-          </div>
+          <div id="rakkanStampContainer" class="absolute left-2.5 top-10 pointer-events-none z-20 hidden"><div id="rakkanStamp" class="rakkan-seal">達人</div></div>
+          <div class="text-[9px] text-stone-500 text-right pt-1 border-t border-stone-300/60 z-10 flex justify-between items-center"><span id="shuffledCountText" class="text-stone-400">1 / 101首</span><span class="text-stone-500">競技かるた 正式読唱規程</span></div>
+        </div>
 
+        <div class="w-16 bg-[#efe6d8] text-stone-600 rounded p-1.5 border border-stone-400/80 flex flex-col justify-between opacity-50 shrink-0 select-none">
+          <div class="text-[9px] font-bold text-stone-500 border-b border-stone-300 pb-0.5">次歌 ▶</div>
+          <div class="flex justify-center items-center h-32 overflow-hidden">
+            <div class="text-[10px] font-mincho writing-vertical tracking-tight truncate text-stone-600" id="slideNextKami">春すぎて 夏来にけらし 白妙の</div>
+          </div>
+          <div class="text-[8px] font-mono text-center text-stone-400 truncate" id="slideNextBadge">2首</div>
         </div>
       </div>
 
@@ -147,10 +142,16 @@
       </div>
     </footer>
 
-    <!-- 札選択モーダル -->
+    <!-- 札選択モーダル（腕試し用複数選択チェックボックス対応） -->
     <div id="cardSelectModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
       <div class="bg-stone-900 border border-stone-700 w-full max-w-md h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden">
-        <div class="p-3 border-b border-stone-800 flex justify-between items-center bg-stone-900/90"><h2 class="text-sm font-bold text-stone-200">練習する本歌を選択</h2><button id="closeCardSelectModalBtn" class="text-stone-400 hover:text-white text-lg p-1">✕</button></div>
+        <div class="p-3 border-b border-stone-800 flex justify-between items-center bg-stone-900/90">
+          <div>
+            <h2 class="text-sm font-bold text-stone-200">練習・腕試しの歌を選択</h2>
+            <div class="text-[10px] text-stone-400">チェックで腕試しの連続読唱リストに追加</div>
+          </div>
+          <button id="closeCardSelectModalBtn" class="text-stone-400 hover:text-white text-lg p-1">✕</button>
+        </div>
         <div class="p-2.5 bg-stone-950/60 border-b border-stone-800 space-y-2">
           <input type="text" id="cardSearchInput" placeholder="番号・決まり字・歌人・歌詞で検索..." class="w-full bg-stone-900 border border-stone-700 rounded px-3 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-amber-500">
           <div class="flex space-x-1 overflow-x-auto pb-1 text-[11px]">
@@ -162,8 +163,11 @@
         </div>
         <div id="cardListContainer" class="flex-1 overflow-y-auto p-2 space-y-1.5 divide-y divide-stone-800/60"></div>
         <div class="p-2.5 border-t border-stone-800 bg-stone-950 flex justify-between items-center text-xs">
-          <button id="shuffleSelectBtn" class="px-3 py-1.5 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 flex items-center space-x-1"><span>🎲</span><span>ランダム選出</span></button>
-          <span id="filteredCountText" class="text-stone-500 text-[11px]"></span>
+          <div class="flex space-x-1.5">
+            <button id="selectAllBtn" class="px-2 py-1 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 text-[11px]">全選択</button>
+            <button id="clearSelectionBtn" class="px-2 py-1 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 text-[11px]">全解除</button>
+          </div>
+          <button id="confirmSelectModalBtn" class="px-3.5 py-1.5 rounded bg-amber-800 hover:bg-amber-700 text-white font-bold text-xs">決定する</button>
         </div>
       </div>
     </div>
@@ -188,6 +192,14 @@
           <div><div class="flex justify-between mb-1"><span class="text-stone-300">余韻 (目標 1.5秒)</span><span id="valYoin" class="font-mono text-emerald-400">1.5s</span></div><input type="range" id="inputYoin" min="0.5" max="7.0" step="0.1" value="1.5" class="w-full accent-emerald-500"></div>
           <div><div class="flex justify-between mb-1"><span class="text-stone-300">間合い・空時間 (目標 1.0秒)</span><span id="valMaai" class="font-mono text-amber-400">1.0s</span></div><input type="range" id="inputMaai" min="0.5" max="7.0" step="0.1" value="1.0" class="w-full accent-amber-500"></div>
           <div><div class="flex justify-between mb-1"><span class="text-stone-300">下の句 (目標 5.0秒)</span><span id="valShimo" class="font-mono text-red-400">5.0s</span></div><input type="range" id="inputShimo" min="1.0" max="7.0" step="0.1" value="5.0" class="w-full accent-red-500"></div>
+          
+          <!-- 腕試し用インターバル設定 -->
+          <div class="pt-2 border-t border-stone-800">
+            <div class="flex justify-between mb-1"><span class="text-amber-300 font-bold">【腕試し】次の歌への移行準備時間</span><span id="valInterval" class="font-mono text-amber-400">2.0s</span></div>
+            <input type="range" id="inputInterval" min="0.0" max="10.0" step="0.5" value="2.0" class="w-full accent-amber-500">
+            <span class="text-[10px] text-stone-500">下の句を読み終えてから、次の前歌を開始するまでの待機時間</span>
+          </div>
+
           <div class="pt-3 border-t border-stone-800 space-y-2">
             <div class="flex justify-between items-center"><span class="text-stone-300 font-semibold">AI接続・中継設定</span><span class="text-[10px] text-emerald-400 bg-emerald-950/70 border border-emerald-800 px-1.5 py-0.5 rounded">中継URL設定済</span></div>
             <div class="space-y-1"><label class="text-[10px] text-stone-400">中継サーバーURL</label><input type="text" id="customProxyUrlInput" class="w-full bg-stone-950 border border-stone-700 rounded px-2.5 py-1.5 text-xs text-stone-200 font-mono"></div>
@@ -310,26 +322,15 @@
 
     const HYAKUNIN_ISSHU = RAW_POEMS.map((p, idx) => {
       const [no, kami, shimo, author, kimari, type] = p;
-      return {
-        id: idx,
-        no: no,
-        kami: kami,
-        shimo: shimo,
-        author: author,
-        kimari: kimari,
-        type: type,
-        summary: `第${no}首の心。決まり字「${kimari}」を意識し、息を整えて稽古しましょう。`,
-        translation: `「${kami} ${shimo}」の意。情景を心に浮かべながら詠み上げます。`,
-        tips: `初声の頭の音をクリアに立ち上げ、一定の速度で下の句へ繋げます。`,
-        joke: '「良き発声！この調子で稽古を重ねられよ。」'
-      };
+      return { id: idx, no: no, kami: kami, shimo: shimo, author: author, kimari: kimari, type: type };
     });
 
-    // モード管理：通常稽古 (single) または 腕試し (trial)
-    let appMode = 'single';
+    let appMode = 'single'; // 'single' または 'trial'
+    let trialType = 'random'; // 'random' または 'selected'
     let trialTargetCount = 10;
     let trialCurrentIndex = 0;
     let trialQueue = [];
+    let userSelectedPoemIds = new Set(); // ユーザーがチェックした歌のID
 
     let currentCardIndex = 0;
     let prevCardIndex = 1;
@@ -338,7 +339,8 @@
 
     let savedTimes = null;
     try { savedTimes = JSON.parse(localStorage.getItem('karuta_target_times')); } catch(e) {}
-    let targetTimes = savedTimes || { kami: 5.5, yoin: 1.5, maai: 1.0, shimo: 5.0 };
+    let targetTimes = savedTimes || { kami: 5.5, yoin: 1.5, maai: 1.0, shimo: 5.0, interval: 2.0 };
+    if (targetTimes.interval === undefined) targetTimes.interval = 2.0;
 
     let currentPhase = 'idle', phaseStartTime = 0, timerAnimFrame = null;
     let audioCtx = null, micStream = null, mediaRecorder = null, recordedChunks = [], lastAudioBlob = null, analyserNode = null, animVolumeFrame = null, isRecording = false;
@@ -352,7 +354,7 @@
     let customProxyUrl = localStorage.getItem('karuta_proxy_url') || "https://karuta-relay.kohayakawakohaya.workers.dev";
     let customPasscode = localStorage.getItem('karuta_passcode') || "";
 
-    const mainActionBtn = document.getElementById('mainActionBtn'), mainActionBtnText = document.getElementById('mainActionBtnText');
+    const mainActionBtn = document.getElementById('mainActionBtn');
     const resetPoemBtn = document.getElementById('resetPoemBtn'), nextCardBtn = document.getElementById('nextCardBtn');
     const phaseLabel = document.getElementById('phaseLabel'), phaseTimerText = document.getElementById('phaseTimerText'), phaseTargetSub = document.getElementById('phaseTargetSub');
     const progressCircle = document.getElementById('progressCircle'), volumeBar = document.getElementById('volumeBar'), totalTimeElapsed = document.getElementById('totalTimeElapsed');
@@ -361,15 +363,14 @@
     const playMyAudioBtn = document.getElementById('playMyAudioBtn'), requestAiFeedbackBtn = document.getElementById('requestAiFeedbackBtn');
     const openAiGuideBtn = document.getElementById('openAiGuideBtn'), modeSwitchBtn = document.getElementById('modeSwitchBtn'), modeSwitchText = document.getElementById('modeSwitchText');
     const trialSettingsBar = document.getElementById('trialSettingsBar'), trialProgressBadge = document.getElementById('trialProgressBadge');
-    const poetSpeechBubble = document.getElementById('poetSpeechBubble'), bubblePoetName = document.getElementById('bubblePoetName'), bubblePoetComment = document.getElementById('bubblePoetComment');
+    const trialTypeRandomBtn = document.getElementById('trialTypeRandomBtn'), trialTypeSelectedBtn = document.getElementById('trialTypeSelectedBtn'), trialCountSelectorRow = document.getElementById('trialCountSelectorRow'), selectedCountBadge = document.getElementById('selectedCountBadge');
     const rakkanStampContainer = document.getElementById('rakkanStampContainer'), rakkanStamp = document.getElementById('rakkanStamp');
     const poemBadge = document.getElementById('poemBadge'), kimarijiBadge = document.getElementById('kimarijiBadge'), cardAuthor = document.getElementById('cardAuthor');
     const kamiText = document.getElementById('kamiText'), shimoText = document.getElementById('shimoText');
     const prevCardBadge = document.getElementById('prevCardBadge'), prevShimoText = document.getElementById('prevShimoText');
     const shuffledCountText = document.getElementById('shuffledCountText');
-    const carouselTrack = document.getElementById('carouselTrack');
-    const slidePrevKami = document.getElementById('slidePrevKami'), slidePrevShimo = document.getElementById('slidePrevShimo'), slidePrevAuthor = document.getElementById('slidePrevAuthor'), slidePrevBadge = document.getElementById('slidePrevBadge');
-    const slideNextKami = document.getElementById('slideNextKami'), slideNextShimo = document.getElementById('slideNextShimo'), slideNextAuthor = document.getElementById('slideNextAuthor'), slideNextBadge = document.getElementById('slideNextBadge');
+    const slidePrevShimo = document.getElementById('slidePrevShimo'), slidePrevBadge = document.getElementById('slidePrevBadge');
+    const slideNextKami = document.getElementById('slideNextKami'), slideNextBadge = document.getElementById('slideNextBadge');
 
     function pickRandomCardExcluding(excludeIds = []) {
       let candidate;
@@ -379,18 +380,14 @@
       return candidate;
     }
 
-    function updateCarouselCards(prevIdx, currIdx, nextIdx) {
+    function updateCardDisplays(prevIdx, currIdx, nextIdx) {
       const prev = HYAKUNIN_ISSHU[prevIdx];
       const curr = HYAKUNIN_ISSHU[currIdx];
       const next = HYAKUNIN_ISSHU[nextIdx];
 
-      // 前歌
       slidePrevBadge.textContent = prev.no === '序' ? '序歌' : `第${prev.no}首`;
-      slidePrevKami.textContent = prev.kami;
       slidePrevShimo.textContent = prev.shimo;
-      slidePrevAuthor.textContent = prev.author;
 
-      // 本歌
       poemBadge.textContent = curr.no === '序' ? '序歌' : `第${curr.no}首`;
       kimarijiBadge.textContent = curr.kimari;
       cardAuthor.textContent = curr.author;
@@ -399,28 +396,11 @@
       prevCardBadge.textContent = prev.no === '序' ? '序歌' : `第${prev.no}首`;
       prevShimoText.textContent = prev.shimo;
 
-      // 次歌
       slideNextBadge.textContent = next.no === '序' ? '序歌' : `第${next.no}首`;
       slideNextKami.textContent = next.kami;
-      slideNextShimo.textContent = next.shimo;
-      slideNextAuthor.textContent = next.author;
 
       shuffledCountText.textContent = `${sequenceCursor + 1} / ${HYAKUNIN_ISSHU.length}首`;
       rakkanStampContainer.classList.add('hidden');
-    }
-
-    // スライドトランジション（左へスクロールして次歌へ移行）
-    function animateCarouselToNext(callback) {
-      carouselTrack.style.transform = 'translateX(-33.333%)';
-      setTimeout(() => {
-        carouselTrack.style.transition = 'none';
-        carouselTrack.style.transform = 'translateX(0)';
-        if (callback) callback();
-        // リフロー後にtransition再有効化
-        setTimeout(() => {
-          carouselTrack.style.transition = 'transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1)';
-        }, 30);
-      }, 500);
     }
 
     function selectCardByIndex(idx) {
@@ -431,7 +411,7 @@
       if (sequenceCursor === -1) sequenceCursor = 0;
 
       resetReaderState();
-      updateCarouselCards(prevCardIndex, currentCardIndex, nextCardIndex);
+      updateCardDisplays(prevCardIndex, currentCardIndex, nextCardIndex);
     }
 
     const TOTAL_CIRCUMFERENCE = 251;
@@ -453,7 +433,7 @@
 
       kamiText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
       shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
-      prevShimoText.className = 'text-xs font-mincho font-bold text-stone-700 truncate max-w-[180px]';
+      prevShimoText.className = 'text-xs font-mincho font-bold text-stone-700 truncate max-w-[190px]';
 
       mainActionBtn.className = 'w-full py-3.5 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-blue-600 active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
       mainActionBtn.innerHTML = `<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>読唱開始</span>`;
@@ -528,13 +508,23 @@
 
     function startTrialGame() {
       trialCurrentIndex = 0;
-      trialQueue = [...practiceSequence].sort(() => Math.random() - 0.5).slice(0, trialTargetCount);
+      
+      if (trialType === 'selected') {
+        if (userSelectedPoemIds.size === 0) {
+          alert('選んだ歌がありません。「歌選択」から読みたい歌にチェックを入れてください。');
+          return;
+        }
+        trialQueue = Array.from(userSelectedPoemIds);
+      } else {
+        trialQueue = [...practiceSequence].sort(() => Math.random() - 0.5).slice(0, trialTargetCount);
+      }
+
       currentCardIndex = trialQueue[0];
       prevCardIndex = pickRandomCardExcluding([currentCardIndex]);
       nextCardIndex = trialQueue.length > 1 ? trialQueue[1] : pickRandomCardExcluding([currentCardIndex, prevCardIndex]);
       
-      updateCarouselCards(prevCardIndex, currentCardIndex, nextCardIndex);
-      trialProgressBadge.textContent = `${trialCurrentIndex + 1} / ${trialTargetCount}首`;
+      updateCardDisplays(prevCardIndex, currentCardIndex, nextCardIndex);
+      trialProgressBadge.textContent = `${trialCurrentIndex + 1} / ${trialQueue.length}首`;
       trialProgressBadge.classList.remove('hidden');
 
       startPractice();
@@ -557,7 +547,8 @@
       stopRecording();
       currentPhase = 'finished';
 
-      phaseLabel.textContent = appMode === 'trial' ? `試合完了 (${trialCurrentIndex + 1}首完読)` : '読了 (録音保存完了)';
+      const totalCount = appMode === 'trial' ? trialQueue.length : 1;
+      phaseLabel.textContent = appMode === 'trial' ? `試合完了 (${trialCurrentIndex + 1}/${totalCount}首)` : '読了 (録音保存完了)';
       phaseLabel.className = 'text-[10px] font-bold tracking-tight text-amber-300 text-center leading-tight';
       phaseTimerText.textContent = '0.0';
       progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE;
@@ -579,7 +570,7 @@
       currentPhase = phase;
       phaseStartTime = performance.now();
 
-      prevShimoText.className = 'text-xs font-mincho font-bold text-stone-700 truncate max-w-[180px]';
+      prevShimoText.className = 'text-xs font-mincho font-bold text-stone-700 truncate max-w-[190px]';
       kamiText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
       shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
 
@@ -624,6 +615,12 @@
         phaseTargetSub.textContent = `目標 ${targetTimes.shimo.toFixed(1)}s`;
         progressCircle.setAttribute('stroke', '#ef4444');
         shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-red-900 bg-red-200/70 rounded px-1 transition-all';
+      } else if (phase === 'transition_interval') {
+        // 次の歌へ移る前の準備時間
+        phaseLabel.textContent = '⏳ 次歌準備';
+        phaseLabel.className = 'text-[10px] font-bold tracking-tight text-sky-400 text-center leading-tight animate-pulse';
+        phaseTargetSub.textContent = `待機 ${targetTimes.interval.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#38bdf8');
       } else if (phase === 'await_stop') {
         phaseLabel.textContent = '⑧ 録音中 (余韻・読了)';
         phaseLabel.className = 'text-[10px] font-bold tracking-tight text-rose-400 text-center leading-tight animate-pulse';
@@ -642,6 +639,7 @@
       if (phase === 'prev_yoin' || phase === 'honga_yoin') return targetTimes.yoin;
       if (phase === 'prev_maai' || phase === 'honga_maai') return targetTimes.maai;
       if (phase === 'honga_kami') return targetTimes.kami;
+      if (phase === 'transition_interval') return targetTimes.interval;
       return 5.0;
     }
 
@@ -666,12 +664,13 @@
         else if (currentPhase === 'honga_maai') startPhase('honga_shimo');
         else if (currentPhase === 'honga_shimo') {
           if (appMode === 'trial') {
-            // 腕試しモード：次歌へ自動スライド進行
-            advanceTrialNextPoem();
+            advanceTrialStep();
           } else {
-            // 通常稽古：ストップ待機
             startPhase('await_stop');
           }
+        } else if (currentPhase === 'transition_interval') {
+          // 準備インターバル終了後、直ちに前歌下の句へ
+          startPhase('prev_shimo');
         }
         return;
       }
@@ -679,28 +678,27 @@
       timerAnimFrame = requestAnimationFrame(tickTimer);
     }
 
-    // 腕試しモード：自動横スライドアニメーション ＆ 次首移行
-    function advanceTrialNextPoem() {
+    // 腕試し：下の句終了時の処理（次の短冊を表示し、待機時間を経て開始）
+    function advanceTrialStep() {
       trialCurrentIndex++;
-      if (trialCurrentIndex >= trialTargetCount) {
-        // 目標首数をすべて読了
+      if (trialCurrentIndex >= trialQueue.length) {
         manualStopAndFinish();
         return;
       }
 
-      // 横スライドアニメーション発火
-      animateCarouselToNext(() => {
-        prevCardIndex = currentCardIndex;
-        currentCardIndex = trialQueue[trialCurrentIndex];
-        const nextInQueue = trialCurrentIndex + 1 < trialQueue.length ? trialQueue[trialCurrentIndex + 1] : pickRandomCardExcluding([currentCardIndex, prevCardIndex]);
-        nextCardIndex = nextInQueue;
+      prevCardIndex = currentCardIndex;
+      currentCardIndex = trialQueue[trialCurrentIndex];
+      const nextInQueue = trialCurrentIndex + 1 < trialQueue.length ? trialQueue[trialCurrentIndex + 1] : pickRandomCardExcluding([currentCardIndex, prevCardIndex]);
+      nextCardIndex = nextInQueue;
 
-        updateCarouselCards(prevCardIndex, currentCardIndex, nextCardIndex);
-        trialProgressBadge.textContent = `${trialCurrentIndex + 1} / ${trialTargetCount首}`;
-        
-        // 直ちに前歌の下の句フェーズから読唱を継続
+      updateCardDisplays(prevCardIndex, currentCardIndex, nextCardIndex);
+      trialProgressBadge.textContent = `${trialCurrentIndex + 1} / ${trialQueue.length}首`;
+
+      if (targetTimes.interval > 0) {
+        startPhase('transition_interval');
+      } else {
         startPhase('prev_shimo');
-      });
+      }
     }
 
     function startRecording() {
@@ -713,7 +711,8 @@
           lastAudioBlob = new Blob(recordedChunks, { type: mime });
           reviewPanel.classList.remove('hidden');
           const recordedSec = ((performance.now() - recordingStartTime) / 1000).toFixed(1);
-          recordedDurationText.textContent = `${recordedSec}s (${appMode === 'trial' ? `${trialCurrentIndex + 1}首通し` : '実測'})`;
+          const totalQ = appMode === 'trial' ? trialQueue.length : 1;
+          recordedDurationText.textContent = `${recordedSec}s (${appMode === 'trial' ? `${trialCurrentIndex + 1}/${totalQ}首通し` : '実測'})`;
         };
         recordingStartTime = performance.now();
         mediaRecorder.start();
@@ -766,9 +765,9 @@
     async function reviewAudioWithAi() {
       if (!lastAudioBlob) return alert('録音された音声がありません。まず読唱を行ってください。');
       const honga = HYAKUNIN_ISSHU[currentCardIndex];
-      const prev = HYAKUNIN_ISSHU[prevCardIndex];
       const modal = document.getElementById('aiModal');
-      document.getElementById('aiModalTitle').textContent = appMode === 'trial' ? `🥋 腕試しモード通し添削 (${trialTargetCount}首)` : '🥋 読手専任師範の音声添削';
+      const totalQ = appMode === 'trial' ? trialQueue.length : 1;
+      document.getElementById('aiModalTitle').textContent = appMode === 'trial' ? `🥋 腕試しモード通し添削 (${totalQ}首)` : '🥋 読手専任師範の音声添削';
       document.getElementById('aiModalContent').innerHTML = `<div class="flex flex-col items-center py-8 space-y-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div><span class="text-stone-300 text-sm">一連の読唱音声を師範が拝聴中...</span></div>`;
       modal.classList.remove('hidden');
       try {
@@ -779,7 +778,7 @@
               parts: [
                 { inlineData: { mimeType: lastAudioBlob.type || 'audio/webm', data: reader.result.split(',')[1] } },
                 { text: `あなたは全日本かるた協会のA級公認読手・専任読手の筆頭指導員です。
-ユーザーが【${appMode === 'trial' ? `腕試し試合モード（${trialCurrentIndex + 1}首連続朗詠）` : '通常稽古'}】として録音した音声を厳正に講評してください。
+ユーザーが【${appMode === 'trial' ? `腕試し試合モード（${totalQ}首連続朗詠）` : '通常稽古'}】として録音した音声を厳正に講評してください。
 
 【直近の本歌情報】
 ・本歌：${honga.no}番 【${honga.kami} / ${honga.shimo}】（決まり字：${honga.kimari} / ${honga.author}）
@@ -851,21 +850,40 @@
 
       filtered.forEach(c => {
         const item = document.createElement('div');
+        const isChecked = userSelectedPoemIds.has(c.id);
         item.className = `p-2.5 rounded-lg flex items-center justify-between hover:bg-stone-800 cursor-pointer transition-colors ${c.id === currentCardIndex ? 'bg-stone-800 border-l-4 border-amber-500' : ''}`;
         item.innerHTML = `
-          <div class="flex items-center space-x-2.5">
-            <span class="w-7 text-center font-mincho font-bold text-xs ${c.no === '序' ? 'text-amber-400' : 'text-stone-400'}">${c.no}</span>
-            <div>
+          <div class="flex items-center space-x-2.5 flex-1 mr-2">
+            <input type="checkbox" class="poem-checkbox w-4 h-4 rounded bg-stone-900 border-stone-600 text-amber-600 focus:ring-0 cursor-pointer" data-id="${c.id}" ${isChecked ? 'checked' : ''}>
+            <span class="w-6 text-center font-mincho font-bold text-xs ${c.no === '序' ? 'text-amber-400' : 'text-stone-400'}">${c.no}</span>
+            <div class="flex-1">
               <div class="text-xs sm:text-sm font-mincho text-stone-200">${c.kami}</div>
               <div class="text-[10px] text-stone-400 mt-0.5"><span>${c.author}</span><span class="text-amber-300 ml-1.5 font-bold">決: ${c.kimari}</span></div>
             </div>
           </div>
-          <button class="text-xs px-2.5 py-1 rounded bg-stone-700 text-stone-200 active:scale-95">本歌に選ぶ</button>
+          <button class="text-xs px-2 py-1 rounded bg-stone-700 text-stone-200 active:scale-95 select-single-btn shrink-0" data-id="${c.id}">本歌に</button>
         `;
-        item.addEventListener('click', () => {
+
+        const chk = item.querySelector('.poem-checkbox');
+        chk.addEventListener('change', (e) => {
+          if (e.target.checked) userSelectedPoemIds.add(c.id);
+          else userSelectedPoemIds.delete(c.id);
+          selectedCountBadge.textContent = userSelectedPoemIds.size;
+        });
+
+        item.querySelector('.select-single-btn').addEventListener('click', (e) => {
+          e.stopPropagation();
           selectCardByIndex(c.id);
           document.getElementById('cardSelectModal').classList.add('hidden');
         });
+
+        item.addEventListener('click', (e) => {
+          if (e.target.tagName.toLowerCase() !== 'input' && e.target.tagName.toLowerCase() !== 'button') {
+            chk.checked = !chk.checked;
+            chk.dispatchEvent(new Event('change'));
+          }
+        });
+
         container.appendChild(item);
       });
     }
@@ -874,12 +892,14 @@
     const inputYoin = document.getElementById('inputYoin'), valYoin = document.getElementById('valYoin');
     const inputMaai = document.getElementById('inputMaai'), valMaai = document.getElementById('valMaai');
     const inputShimo = document.getElementById('inputShimo'), valShimo = document.getElementById('valShimo');
+    const inputInterval = document.getElementById('inputInterval'), valInterval = document.getElementById('valInterval');
 
     function syncSliderDisplay() {
       inputKami.value = targetTimes.kami; valKami.textContent = `${targetTimes.kami.toFixed(1)}s`;
       inputYoin.value = targetTimes.yoin; valYoin.textContent = `${targetTimes.yoin.toFixed(1)}s`;
       inputMaai.value = targetTimes.maai; valMaai.textContent = `${targetTimes.maai.toFixed(1)}s`;
       inputShimo.value = targetTimes.shimo; valShimo.textContent = `${targetTimes.shimo.toFixed(1)}s`;
+      inputInterval.value = targetTimes.interval; valInterval.textContent = `${targetTimes.interval.toFixed(1)}s`;
     }
 
     function saveAndApplyTimes() {
@@ -894,8 +914,8 @@
     inputYoin.addEventListener('input', (e) => { targetTimes.yoin = parseFloat(e.target.value); valYoin.textContent = `${targetTimes.yoin.toFixed(1)}s`; saveAndApplyTimes(); });
     inputMaai.addEventListener('input', (e) => { targetTimes.maai = parseFloat(e.target.value); valMaai.textContent = `${targetTimes.maai.toFixed(1)}s`; saveAndApplyTimes(); });
     inputShimo.addEventListener('input', (e) => { targetTimes.shimo = parseFloat(e.target.value); valShimo.textContent = `${targetTimes.shimo.toFixed(1)}s`; saveAndApplyTimes(); });
+    inputInterval.addEventListener('input', (e) => { targetTimes.interval = parseFloat(e.target.value); valInterval.textContent = `${targetTimes.interval.toFixed(1)}s`; saveAndApplyTimes(); });
 
-    // モード切り替え（通常稽古 ↔ 腕試し）
     modeSwitchBtn.addEventListener('click', () => {
       if (appMode === 'single') {
         appMode = 'trial';
@@ -903,7 +923,8 @@
         modeSwitchBtn.className = 'text-xs px-2.5 py-1 rounded bg-rose-950/80 border border-rose-600/70 text-rose-300 font-bold active:scale-95 transition-all flex items-center space-x-1';
         trialSettingsBar.classList.remove('hidden');
         trialProgressBadge.classList.remove('hidden');
-        trialProgressBadge.textContent = `1 / ${trialTargetCount}首`;
+        const count = trialType === 'selected' ? userSelectedPoemIds.size : trialTargetCount;
+        trialProgressBadge.textContent = `1 / ${count}首`;
       } else {
         appMode = 'single';
         modeSwitchText.textContent = '腕試し';
@@ -914,7 +935,28 @@
       resetReaderState();
     });
 
-    // 腕試し首数ボタン選択
+    trialTypeRandomBtn.addEventListener('click', () => {
+      trialType = 'random';
+      trialTypeRandomBtn.className = 'px-2 py-0.5 rounded bg-amber-800 text-white font-bold text-[11px]';
+      trialTypeSelectedBtn.className = 'px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]';
+      trialCountSelectorRow.classList.remove('hidden');
+      trialProgressBadge.textContent = `1 / ${trialTargetCount}首`;
+      resetReaderState();
+    });
+
+    trialTypeSelectedBtn.addEventListener('click', () => {
+      trialType = 'selected';
+      trialTypeSelectedBtn.className = 'px-2 py-0.5 rounded bg-amber-800 text-white font-bold text-[11px]';
+      trialTypeRandomBtn.className = 'px-2 py-0.5 rounded bg-stone-800 text-stone-300 text-[11px]';
+      trialCountSelectorRow.classList.add('hidden');
+      trialProgressBadge.textContent = `1 / ${userSelectedPoemIds.size}首`;
+      if (userSelectedPoemIds.size === 0) {
+        document.getElementById('cardSelectModal').classList.remove('hidden');
+        renderCardPickerList();
+      }
+      resetReaderState();
+    });
+
     document.querySelectorAll('.trial-count-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('.trial-count-btn').forEach(b => {
@@ -925,6 +967,26 @@
         trialProgressBadge.textContent = `1 / ${trialTargetCount}首`;
         resetReaderState();
       });
+    });
+
+    document.getElementById('selectAllBtn').addEventListener('click', () => {
+      HYAKUNIN_ISSHU.forEach(p => userSelectedPoemIds.add(p.id));
+      selectedCountBadge.textContent = userSelectedPoemIds.size;
+      renderCardPickerList();
+    });
+
+    document.getElementById('clearSelectionBtn').addEventListener('click', () => {
+      userSelectedPoemIds.clear();
+      selectedCountBadge.textContent = 0;
+      renderCardPickerList();
+    });
+
+    document.getElementById('confirmSelectModalBtn').addEventListener('click', () => {
+      document.getElementById('cardSelectModal').classList.add('hidden');
+      selectedCountBadge.textContent = userSelectedPoemIds.size;
+      if (appMode === 'trial' && trialType === 'selected') {
+        trialProgressBadge.textContent = `1 / ${userSelectedPoemIds.size}首`;
+      }
     });
 
     prepareMicBtn.addEventListener('click', setupMicrophone);
@@ -960,13 +1022,6 @@
       });
     });
 
-    document.getElementById('shuffleSelectBtn').addEventListener('click', () => {
-      practiceSequence.sort(() => Math.random() - 0.5);
-      sequenceCursor = 0;
-      selectCardByIndex(practiceSequence[0]);
-      document.getElementById('cardSelectModal').classList.add('hidden');
-    });
-
     document.getElementById('closeAiModalBtn').addEventListener('click', () => document.getElementById('aiModal').classList.add('hidden'));
     document.getElementById('openSettingsBtn').addEventListener('click', () => {
       syncSliderDisplay();
@@ -987,6 +1042,11 @@
       alert('設定を保存しました');
       document.getElementById('settingsModal').classList.add('hidden');
     });
+
+    // 初期化
+    // デフォルトで1〜10番をサンプル選択しておく
+    for (let i = 1; i <= 10; i++) userSelectedPoemIds.add(i);
+    selectedCountBadge.textContent = userSelectedPoemIds.size;
 
     syncSliderDisplay();
     selectCardByIndex(0);
