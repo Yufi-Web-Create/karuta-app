@@ -9,7 +9,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
     body { font-family: 'Zen Kaku Gothic New', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     .font-mincho { font-family: 'Shippori Mincho', serif; }
-    .writing-vertical { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.18em; }
+    .writing-vertical { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.16em; }
     .tanzaku-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3); }
     .rakkan-seal { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 2px solid #b91c1c; color: #b91c1c; font-family: 'Shippori Mincho', serif; font-weight: 800; font-size: 14px; line-height: 1.1; border-radius: 6px; transform: rotate(-6deg); background-color: rgba(254, 226, 226, 0.9); box-shadow: 1px 2px 4px rgba(0,0,0,0.15); }
   </style>
@@ -31,22 +31,35 @@
     <main class="flex-1 flex flex-col items-center justify-center my-2 relative w-full">
       <div class="w-full max-w-xs flex justify-between items-center px-2 py-1 mb-1.5 text-xs text-stone-400">
         <button id="openCardSelectModalBtn" class="flex items-center space-x-1 px-2.5 py-1 rounded bg-stone-800/80 hover:bg-stone-700 text-stone-300 border border-stone-700/60 active:scale-95 transition-all">
-          <span id="poemBadge" class="font-mincho font-bold text-amber-300">序歌</span><span class="text-[10px] text-stone-400">▼ 歌選択</span>
+          <span id="poemBadge" class="font-mincho font-bold text-amber-300">序歌</span><span class="text-[10px] text-stone-400">▼ 本歌選択</span>
         </button>
         <div class="flex items-center space-x-2">
           <span id="kimarijiBadge" class="bg-amber-950/60 text-amber-300 border border-amber-800/50 px-2.5 py-1 rounded text-xs font-bold tracking-wide">難波津</span>
         </div>
       </div>
 
-      <div class="relative w-full max-w-xs bg-[#f4ede2] text-stone-900 rounded-lg p-5 tanzaku-shadow border-2 border-stone-300 flex flex-col justify-between overflow-hidden" style="min-height: 250px;">
+      <!-- 短冊カード（前歌下の句 ＋ 本歌上の句・下の句） -->
+      <div class="relative w-full max-w-xs bg-[#f4ede2] text-stone-900 rounded-lg p-4 tanzaku-shadow border-2 border-stone-300 flex flex-col justify-between overflow-hidden">
         <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#6b46c1 0.75px, transparent 0.75px); background-size: 12px 12px;"></div>
-        <div class="flex justify-around items-stretch h-48 py-1 px-2 z-10">
-          <div class="flex flex-col justify-end text-[11px] font-mincho text-stone-500 writing-vertical py-1 border-l border-stone-300/80 pl-2"><span id="cardAuthor">王仁</span></div>
-          <div class="flex flex-col justify-start text-lg sm:text-xl font-mincho font-bold writing-vertical tracking-widest text-stone-800" id="kamiText">難波津に 咲くやこの花</div>
-          <div class="flex flex-col justify-start text-lg sm:text-xl font-mincho font-bold writing-vertical tracking-widest text-stone-800" id="shimoText">冬ごもり 今を春べと 咲くやこの花</div>
+        
+        <!-- 前歌下の句表示エリア -->
+        <div class="mb-3 pb-2.5 border-b border-dashed border-stone-400/70 z-10">
+          <div class="flex items-center justify-between text-[11px] text-stone-600 mb-1">
+            <span class="font-bold flex items-center space-x-1 text-stone-700"><span>◀</span><span>前歌（下の句より読出）</span></span>
+            <span id="prevCardBadge" class="bg-stone-300/80 text-stone-700 px-1.5 py-0.5 rounded font-mono text-[10px]">第1首</span>
+          </div>
+          <div id="prevShimoText" class="text-sm font-mincho font-semibold text-stone-700 pl-1">わが衣手は 露にぬれつつ</div>
         </div>
+
+        <!-- 本歌エリア -->
+        <div class="flex justify-around items-stretch h-44 py-1 px-2 z-10">
+          <div class="flex flex-col justify-end text-[11px] font-mincho text-stone-500 writing-vertical py-1 border-l border-stone-300/80 pl-2"><span id="cardAuthor">王仁</span></div>
+          <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="kamiText">難波津に 咲くやこの花</div>
+          <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="shimoText">冬ごもり 今を春べと 咲くやこの花</div>
+        </div>
+
         <div id="rakkanStampContainer" class="absolute right-3 top-3 pointer-events-none z-20 hidden"><div id="rakkanStamp" class="rakkan-seal">達人</div></div>
-        <div class="text-[10px] text-stone-500 text-right tracking-tighter pt-1 border-t border-stone-300/60 z-10 flex justify-between items-center"><span id="shuffledCountText" class="text-stone-400">1 / 100首</span><span class="text-stone-500">全日本かるた協会 読唱規程準拠</span></div>
+        <div class="text-[10px] text-stone-500 text-right tracking-tighter pt-1.5 border-t border-stone-300/60 z-10 flex justify-between items-center"><span id="shuffledCountText" class="text-stone-400">1 / 101首</span><span class="text-stone-500">競技かるた 正式読唱規程</span></div>
       </div>
 
       <div id="poetSpeechBubble" class="w-full max-w-xs mt-2 px-3 py-2 bg-amber-950/60 border border-amber-700/50 rounded-lg text-xs text-amber-200 hidden transition-all flex items-start space-x-2">
@@ -55,7 +68,7 @@
 
       <div class="w-full max-w-xs mt-2 bg-stone-800/80 border border-stone-700/80 rounded-lg p-2.5 text-xs text-stone-300 transition-all">
         <div class="flex items-center justify-between text-stone-400 mb-1">
-          <span class="flex items-center space-x-1 font-bold text-amber-400"><span>💡</span><span>歌の心・情景</span></span>
+          <span class="flex items-center space-x-1 font-bold text-amber-400"><span>💡</span><span>本歌の心・情景</span></span>
           <button id="toggleTipsDetailBtn" class="text-[10px] text-stone-400 hover:text-stone-200 underline">詳細を開く</button>
         </div>
         <p id="poemMiniSummary" class="text-[11px] text-stone-300 leading-snug">冬の寒さに耐え、春の訪れとともに咲き誇る梅の花を祝う、かるたの幕開けを飾る伝統の序歌。</p>
@@ -65,15 +78,16 @@
         </div>
       </div>
 
+      <!-- タイマー円弧演出 -->
       <div class="relative flex items-center justify-center my-3 shrink-0">
         <svg class="w-28 h-28 transform -rotate-90">
           <circle cx="56" cy="56" r="46" stroke="#292524" stroke-width="8" fill="transparent" />
           <circle id="progressCircle" cx="56" cy="56" r="46" stroke="#3b82f6" stroke-width="8" fill="transparent" stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-75" />
         </svg>
-        <div class="absolute flex flex-col items-center justify-center text-center">
-          <span id="phaseLabel" class="text-xs font-bold tracking-widest text-blue-400">上の句</span>
-          <span id="phaseTimerText" class="text-xl font-mono font-bold text-white tracking-tight">5.5</span>
-          <span class="text-[9px] text-stone-500 font-mono" id="phaseTargetSub">目標 5.5s</span>
+        <div class="absolute flex flex-col items-center justify-center text-center px-1">
+          <span id="phaseLabel" class="text-[11px] font-bold tracking-tight text-blue-400 text-center leading-tight">前歌 下の句</span>
+          <span id="phaseTimerText" class="text-xl font-mono font-bold text-white tracking-tight">5.0</span>
+          <span class="text-[9px] text-stone-500 font-mono" id="phaseTargetSub">目標 5.0s</span>
         </div>
       </div>
 
@@ -84,7 +98,7 @@
       </div>
 
       <div id="reviewPanel" class="w-full max-w-xs mt-2 bg-stone-800/95 border border-stone-700 p-2.5 rounded-lg hidden transition-all flex flex-col space-y-2">
-        <div class="flex justify-between items-center text-xs"><span class="text-stone-300 font-medium">前回の読唱記録</span><span id="recordedDurationText" class="font-mono text-amber-400 font-bold">13.2s</span></div>
+        <div class="flex justify-between items-center text-xs"><span class="text-stone-300 font-medium">通し読唱の記録</span><span id="recordedDurationText" class="font-mono text-amber-400 font-bold">20.5s</span></div>
         <div class="flex items-center space-x-2">
           <button id="playMyAudioBtn" class="flex-1 py-1.5 px-2 rounded bg-stone-700 hover:bg-stone-600 text-xs text-stone-200 flex items-center justify-center space-x-1 active:scale-95 transition-all"><span>▶</span><span>自分の声を聴く</span></button>
           <button id="requestAiFeedbackBtn" class="flex-1 py-1.5 px-2 rounded bg-indigo-900 hover:bg-indigo-800 text-xs text-indigo-100 font-semibold border border-indigo-600/70 flex items-center justify-center space-x-1 active:scale-95 transition-all"><span>🥋</span><span>AI師範添削</span></button>
@@ -107,7 +121,7 @@
     <div id="cardSelectModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
       <div class="bg-stone-900 border border-stone-700 w-full max-w-md h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden">
         <div class="p-3 border-b border-stone-800 flex justify-between items-center bg-stone-900/90">
-          <h2 class="text-sm font-bold text-stone-200">練習する歌を選択</h2>
+          <h2 class="text-sm font-bold text-stone-200">練習する本歌を選択</h2>
           <button id="closeCardSelectModalBtn" class="text-stone-400 hover:text-white text-lg p-1">✕</button>
         </div>
         <div class="p-2.5 bg-stone-950/60 border-b border-stone-800 space-y-2">
@@ -115,8 +129,8 @@
           <div class="flex space-x-1 overflow-x-auto pb-1 text-[11px]">
             <button class="filter-tab-btn px-2.5 py-1 rounded bg-amber-900/40 text-amber-300 border border-amber-700/50" data-filter="all">すべて</button>
             <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="ichiji">一字決まり (7首)</button>
-            <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="niji">二字決まり</button>
-            <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="ooyama">大山札 (6字)</button>
+            <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="niji">二字決まり (42首)</button>
+            <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="ooyama">大山札 (6首)</button>
           </div>
         </div>
         <div id="cardListContainer" class="flex-1 overflow-y-auto p-2 space-y-1.5 divide-y divide-stone-800/60"></div>
@@ -175,37 +189,131 @@
   </div>
 
   <script>
-    const HYAKUNIN_ISSHU = [
-      { id: 0, no: '序', kami: '難波津に 咲くやこの花', shimo: '冬ごもり 今を春べと 咲くやこの花', author: '王仁', kimari: '難波津', type: '序歌', summary: '厳しい冬を耐えて満開に咲く梅の花を讃え、春の訪れを寿ぐ伝統の序歌。', translation: '難波津の入り江に、見事に梅の花が咲いたよ。冬ごもりを経て、今を春だと告げるように花が咲き誇っている。', tips: '「な」の初声は柔らかくかつ芯を持たせ、徐々に息を広げて会場の空気を鎮めます。', joke: '「冬ごもりから覚めたぞ！この調子で100首、喉を温めてまいるのじゃ！」' },
-      { id: 1, no: 1, kami: '秋の田の かりほの庵の 苫をあらみ', shimo: 'わが衣手は 露にぬれつつ', author: '天智天皇', kimari: 'あきの', type: '三字', summary: '粗末な小屋で稲刈りをする農民の苦労に思いを馳せ、民への深い慈愛を詠んだ歌。', translation: '秋の田んぼの仮小屋の屋根の茅の目が粗いので、私の着物の袖は夜露に濡れ続けている。', tips: '「あ」の初声を太く堂々と立ち上げ、天皇の慈悲深い眼差しを表現します。', joke: '「余の袖の濡れ具合に気を取られず、しっかり決まり字を飛ばしてくれよ！」' },
-      { id: 2, no: 2, kami: '春すぎて 夏来にけらし 白妙の', shimo: '衣ほすてふ 天の香具山', author: '持統天皇', kimari: 'はるす', type: '三字', summary: '新緑の香具山に白い衣がひるがえる、初夏の清々しい風情を瑞々しく描いた名歌。', translation: 'いつの間にか春が過ぎ去り、初夏がやって来たらしい。白い衣が干されているという天の香具山に。', tips: '「は」から「る」への移行を涼やかに流し、清涼感のある響きを保ちます。', joke: '「白妙の衣も乾くほど、よい発声であったぞ！」' },
-      { id: 3, no: 3, kami: 'あしびきの 山鳥の尾の しだり尾の', shimo: 'ながながし夜を ひとりかも寝む', author: '柿本人麻呂', kimari: 'あし', type: '二字', summary: '山鳥の長く垂れた尾に寄せて、独り寂しく過ごす秋の夜の切なさを歌う。', translation: '山鳥の長く垂れた尾のように、果てしなく長い秋の夜を、私は独り寂しく寝るのであろうか。', tips: '「な」の連続する響きを重く引き延ばさず、澄んだ哀感を漂わせます。', joke: '「独り寝の夜は寂しいが、お主の読唱の余韻は心地よいのう。」' },
-      { id: 4, no: 4, kami: '田子の浦に うち出でてみれば 白妙の', shimo: '富士の高嶺に 雪は降りつつ', author: '山部赤人', kimari: 'たご', type: '二字', summary: '富士の雄大な白雪の景色を仰ぎ見る、万葉集屈指の雄大な景勝歌。', translation: '田子の浦の海岸に出て仰ぎ見ると、真っ白な富士の高い峰に雪が降り続いている。', tips: '「ふ」の頭声をしっかり前へ飛ばし、霊峰富士の高さを印象づけます。', joke: '「富士の嶺まで通るような朗々たる声じゃった！」' },
-      { id: 5, no: 5, kami: '奥山に 紅葉踏みわけ 鳴く鹿の', shimo: '声きく時ぞ 秋は悲しき', author: '猿丸大夫', kimari: 'おく', type: '二字', summary: '紅葉の奥山で妻を恋いて鳴く鹿の声に、秋の深まりと深い孤独を重ねた一首。', translation: '奥山で散り敷く紅葉を踏み分けながら鳴いている鹿の声を聞く時こそ、秋の寂しさが身にしみる。', tips: '「お」の深い母音をしっかり響かせ、深山幽谷の静けさを醸し出します。', joke: '「鹿も聞き惚れて鳴き止みそうな哀切の調べじゃな。」' },
-      { id: 11, no: 11, kami: 'わたの原 八十島かけて 漕ぎ出でぬと', shimo: '人には告げよ あまの釣舟', author: '参議篁', kimari: 'わたのはら や', type: '大山札', summary: '隠岐へ流される小野篁が、都の愛する人へ伝言を託す舟出の歌。', translation: '大海原の島々を目指して漕ぎ出して行ったと、都の愛しい人に伝えておくれ。', tips: '「わ」の母音に波立つ海の広がりを乗せ、毅然とした響きを保ちます。', joke: '「荒波も静まり返るような凛々しき声であった！」' },
-      { id: 15, no: 15, kami: '君がため 春の野に出でて 若菜つむ', shimo: 'わが衣手に 雪は降りつつ', author: '光孝天皇', kimari: 'きみがため は', type: '大山札', summary: '愛する人の健康を祈り春の野で若菜を摘む真心と、袖に舞い散る清冽な雪の情景。', translation: 'あなたに差し上げるため、春の野に出て若菜を摘む私の袖に、雪がしきりに降りかかっています。', tips: '「き」の初声を澄み切ったトーンで当て、雪の静けさを伝えます。', joke: '「若菜の瑞々しさのように清らかな発声であったぞ！」' },
-      { id: 17, no: 17, kami: 'ちはやぶる 神代もきかず 竜田川', shimo: 'からくれなゐに 水くくるとは', author: '在原業平朝臣', kimari: 'ちは', type: '二字', summary: '鮮やかに紅葉が流れる竜田川の美しさを、神代の奇跡をも凌駕する壮麗さで讃える。', translation: '神々の時代にも聞いたことがありません。竜田川の水面が鮮やかな深紅色に絞り染められているとは。', tips: '「ち」の鋭いアタックから「は」の広がりへ。王朝随一の華やぎを余韻に残します。', joke: '「神代にも聞かぬほどの見事な節回し！竜田川の紅葉が目に浮かぶわ！」' },
-      { id: 57, no: 57, kami: 'めぐりあひて 見しやそれとも わかぬまに', shimo: '雲がくれにし 夜半の月かな', author: '紫式部', kimari: 'め', type: '一字', summary: '偶然再会した幼馴染の友が慌ただしく立ち去った寂しさを、雲隠れする月に託した歌。', translation: 'せっかく巡り逢えたのに、雲の中に隠れてしまった夜半の月のように慌ただしく帰ってしまわれた。', tips: '一字決まりの「め」。第一音の母音を濁さず、針の穴を通すように正確に発声します。', joke: '「一瞬の月のように見事な一音！選手たちの手が宙を舞うたぞ！」' },
-      { id: 70, no: 70, kami: 'さびしさに 宿を立ち出でて ながむれば', shimo: 'いづこも同じ 秋の夕ぐれ', author: '良暹法師', kimari: 'さ', type: '一字', summary: '寂しさに耐えかねて庵を出たものの、どこもかしこも同じ秋の寂寥に包まれている絶望美。', translation: '寂しさに耐えかねて草庵の外に出てみたが、どこも同じように寂しい秋の夕暮れであった。', tips: '一字決まり「さ」。「す」と混同させない澄んだ無声音の立ち上がりを極めます。', joke: '「秋の夕暮れの寂しさが、余韻とともに心に染み渡ったぞ。」' },
-      { id: 77, no: 77, kami: '瀬をはやみ 岩にせかるる 滝川の', shimo: 'われても末に あはむとぞ思ふ', author: '崇徳院', kimari: 'せ', type: '一字', summary: '激流が岩に砕かれて二つに分かれてもやがて合流するように、運命の再会を誓う。', translation: '急流が岩にせき止められて二つに分かれても再び一つになるように、私たちもいつか必ず再会しましょう。', tips: '一字決まり「せ」。激流の迸りと運命を貫く激情を、気迫を込めて押し出します。', joke: '「岩をも砕く鋭き初声！この崇徳院の想い、しかと受け止めたぞ。」' },
-      { id: 87, no: 87, kami: '村雨の 露もまだひぬ まきの葉に', shimo: '霧たちのぼる 秋の夕ぐれ', author: '寂蓮法師', kimari: 'む', type: '一字', summary: '通り雨の雫が残る槇の葉から夕霧が立ち上る、静謐な幽玄の世界を水墨画のように描く。', translation: 'にわか雨の露もまだ乾ききっていない槇の葉に、霧が立ち上っていく物寂しい秋の夕暮れである。', tips: '一字決まり「む」。鼻腔共鳴を活かし、静寂から立ち上げます。', joke: '「静寂の中にフッと立ち上がる完璧な『む』！息を呑んだぞ。」' }
+    // 小倉百人一首（全100首＋序歌）完全データ
+    const RAW_POEMS = [
+      ['序', '難波津に 咲くやこの花', '冬ごもり 今を春べと 咲くやこの花', '王仁', '難波津', '序歌', '厳しい冬を耐えて満開に咲く梅の花を讃え、春の訪れを寿ぐ伝統の序歌。', '難波津の入り江に、見事に梅の花が咲いたよ。冬ごもりを経て、今を春だと告げるように花が咲き誇っている。', '「な」の初声は柔らかくかつ芯を持たせ、徐々に息を広げて会場の空気を鎮めます。', '「冬ごもりから覚めたぞ！この調子で100首、喉を温めてまいるのじゃ！」'],
+      [1, '秋の田の かりほの庵の 苫をあらみ', 'わが衣手は 露にぬれつつ', '天智天皇', 'あきの', '三字', '粗末な小屋で稲刈りをする農民の苦労に思いを馳せ、民への深い慈愛を詠んだ歌。', '秋の田んぼの仮小屋の屋根の茅の目が粗いので、私の着物の袖は夜露に濡れ続けている。', '「あ」の初声を太く堂々と立ち上げ、天皇の慈悲深い眼差しを表現します。', '「余の袖の濡れ具合に気を取られず、しっかり決まり字を飛ばしてくれよ！」'],
+      [2, '春すぎて 夏来にけらし 白妙の', '衣ほすてふ 天の香具山', '持統天皇', 'はるす', '三字', '新緑の香具山に白い衣がひるがえる、初夏の清々しい風情を瑞々しく描いた名歌。', 'いつの間にか春が過ぎ去り、初夏がやって来たらしい。白い衣が干されているという天の香具山に。', '「は」から「る」への移行を涼やかに流し、清涼感のある響きを保ちます。', '「白妙の衣も乾くほど、よい発声であったぞ！」'],
+      [3, 'あしびきの 山鳥の尾の しだり尾の', 'ながながし夜を ひとりかも寝む', '柿本人麻呂', 'あし', '二字', '山鳥の長く垂れた尾に寄せて、独り寂しく過ごす秋の夜の切なさを歌う。', '山鳥の長く垂れた尾のように、果てしなく長い秋の夜を、私は独り寂しく寝るのであろうか。', '「な」の連続する響きを重く引き延ばさず、澄んだ哀感を漂わせます。', '「独り寝の夜は寂しいが、お主の読唱の余韻は心地よいのう。」'],
+      [4, '田子の浦に うち出でてみれば 白妙の', '富士の高嶺に 雪は降りつつ', '山部赤人', 'たご', '二字', '富士の雄大な白雪の景色を仰ぎ見る、万葉集屈指の雄大な景勝歌。', '田子の浦の海岸に出て仰ぎ見ると、真っ白な富士の高い峰に雪が降り続いている。', '「ふ」の頭声をしっかり前へ飛ばし、霊峰富士の高さを印象づけます。', '「富士の嶺まで通るような朗々たる声じゃった！」'],
+      [5, '奥山に 紅葉踏みわけ 鳴く鹿の', '声きく時ぞ 秋は悲しき', '猿丸大夫', 'おく', '二字', '紅葉の奥山で妻を恋いて鳴く鹿の声に、秋の深まりと深い孤独を重ねた一首。', '奥山で散り敷く紅葉を踏み分けながら鳴いている鹿の声を聞く時こそ、秋の寂しさが身にしみる。', '「お」の深い母音をしっかり響かせ、深山幽谷の静けさを醸し出します。', '「鹿も聞き惚れて鳴き止みそうな哀切の調べじゃな。」'],
+      [6, 'かささぎの 渡せる橋に おく霜の', '白きを見れば 夜ぞ更けにける', '中納言家持', 'かさ', '二字'],
+      [7, '天の原 ふりさけ見れば 春日なる', '三笠の山に 出でし月かも', '安倍仲麿', 'あまの', '三字'],
+      [8, 'わが庵は 都のたつみ しかぞ住む', '世をうぢ山と 人はいふなり', '喜撰法師', 'わがい', '三字'],
+      [9, '花の色は うつりにけりな いたづらに', 'わが身世にふる ながめせしまに', '小野小町', 'はなの', '三字'],
+      [10, 'これやこの 行くも帰るも わかれつつ', '知るも知らぬも 逢坂の関', '蝉丸', 'これ', '二字'],
+      [11, 'わたの原 八十島かけて 漕ぎ出でぬと', '人には告げよ あまの釣舟', '参議篁', 'わたのはら や', '大山札'],
+      [12, '天つ風 雲のかよひ路 吹きとぢよ', 'をとめの姿 しばしとどめむ', '僧正遍昭', 'あまつ', '三字'],
+      [13, 'つくばねの 峰より落つる みなの川', '恋ぞつもりて 淵となりぬる', '陽成院', 'つく', '二字'],
+      [14, 'みちのくの しのぶもぢずり 誰ゆゑに', '乱れそめにき われならなくに', '河原左大臣', 'みち', '二字'],
+      [15, '君がため 春の野に出でて 若菜つむ', 'わが衣手に 雪は降りつつ', '光孝天皇', 'きみがため は', '大山札'],
+      [16, '立ち別れ いなばの山の 峰に生ふる', 'まつとし聞かば 今帰り来む', '中納言行平', 'たち', '二字'],
+      [17, 'ちはやぶる 神代もきかず 竜田川', 'からくれなゐに 水くくるとは', '在原業平朝臣', 'ちは', '二字', '鮮やかに紅葉が流れる竜田川の美しさを、神代の奇跡をも凌駕する壮麗さで讃える。', '神々の時代にも聞いたことがありません。竜田川の水面が鮮やかな深紅色に絞り染められているとは。', '「ち」の鋭いアタックから「は」の広がりへ。王朝随一の華やぎを余韻に残します。', '「神代にも聞かぬほどの見事な節回し！竜田川の紅葉が目に浮かぶわ！」'],
+      [18, '住の江の 岸に寄る波 よるさへや', '夢の通ひ路 人目よくらむ', '藤原敏行朝臣', 'す', '一字'],
+      [19, '難波潟 短き芦の ふしのまも', '逢はでこの世を 過ぐしてよとや', '伊勢', 'なにはが', '四字'],
+      [20, 'わびぬれば 今はた同じ 難波なる', 'みをつくしても 逢はむとぞ思ふ', '元良親王', 'わび', '二字'],
+      [21, '今来むと いひしばかりに 長月の', '有明の月を 待ち出でつるかな', '素性法師', 'いまこ', '三字'],
+      [22, '吹くからに 秋の草木の しをるれば', 'むべ山風を 嵐といふらむ', '文屋康秀', 'ふ', '一字'],
+      [23, '月見れば 千々にものこそ 悲しけれ', 'わが身一つの 秋にはあらねど', '大江千里', 'つき', '二字'],
+      [24, 'このたびは 幣も取りあへず 手向山', '紅葉の錦 神のまにまに', '菅家', 'この', '二字'],
+      [25, '名にし負はば 逢坂山の さねかづら', '人に知られで くるよしもがな', '三条右大臣', 'なにし', '三字'],
+      [26, '小倉山 峰のもみぢ葉 心あらば', '今ひとたびの みゆき待たなむ', '貞信公', 'をぐ', '二字'],
+      [27, 'みかの原 わきて流るる いづみ川', 'いつ見きとてか 恋しかるらむ', '中納言兼輔', 'みかの', '三字'],
+      [28, '山里は 冬ぞ寂しさ まさりける', '人目も草も かれぬと思へば', '源宗于朝臣', 'やまざ', '三字'],
+      [29, '心あてに 折らばや折らむ 初霜の', '置きまどはせる 白菊の花', '凡河内躬恒', 'こころあ', '四字'],
+      [30, '有明の つれなく見えし 別れより', '暁ばかり 憂きものはなし', '壬生忠岑', 'ありあ', '三字'],
+      [31, '朝ぼらけ 有明の月と 見るまでに', '吉野の里に 降れる白雪', '坂上是則', 'あさぼらけ あ', '大山札'],
+      [32, '山川に 風のかけたる しがらみは', '流れもあへぬ 紅葉なりけり', '春道列樹', 'やまが', '三字'],
+      [33, 'ひさかたの 光のどけき 春の日に', '静心なく 花の散るらむ', '紀友則', 'ひさ', '二字'],
+      [34, '誰をかも 知る人にせむ 高砂の', '松も昔の 友ならなくに', '藤原興風', 'たれ', '二字'],
+      [35, '人はいさ 心も知らず ふるさとは', '花ぞ昔の 香ににほひける', '紀貫之', 'ひとは', '三字'],
+      [36, '夏の夜は まだ宵ながら 明けぬるを', '雲のいづこに 月宿るらむ', '清原深養父', 'なつの', '三字'],
+      [37, '白露に 風の吹きしく 秋の野は', 'つらぬきとめぬ 玉ぞ散りける', '文屋朝康', 'しら', '二字'],
+      [38, '忘らるる 身をば思はず 誓ひてし', '人の命の 惜しくもあるかな', '右近', 'わすら', '三字'],
+      [39, '浅茅生の 小野の篠原 しのぶれど', 'あまりてなどか 人の恋しき', '参議等', 'あさぢ', '三字'],
+      [40, '忍ぶれど 色に出でにけり わが恋は', 'ものや思ふと 人の問ふまで', '平兼盛', 'しの', '二字'],
+      [41, '恋すてふ わが名はまだき 立ちにけり', '人知れずこそ 思ひそめしか', '壬生忠見', 'こひ', '二字'],
+      [42, '契りきな かたみに袖を しぼりつつ', '末の松山 波越さじとは', '清原元輔', 'ちぎりき', '四字'],
+      [43, '逢ひ見ての のちの心に くらぶれば', '昔はものを 思はざりけり', '権中納言敦忠', 'あひ', '二字'],
+      [44, '逢ふことの 絶えてしなくは なかなかにおか', '人をも身をも 恨みざらまし', '中納言朝忠', 'あふこ', '三字'],
+      [45, 'あはれとも いふべき人は 思ほえで', '身のいたづらに なりぬべきかな', '謙徳公', 'あはれ', '三字'],
+      [46, '由良の門を 渡る舟人 かぢを絶え', 'ゆくへも知らぬ 恋の道かな', '曽禰好忠', 'ゆら', '二字'],
+      [47, '八重むぐら しげれる宿の さびしきに', '人こそ見えね 秋は来にけり', '恵慶法師', 'やへ', '二字'],
+      [48, '風をいたみ 岩うつ波の おのれのみ', 'くだけてものを 思ふころかな', '源重之', 'かぜを', '三字'],
+      [49, '御垣守 衛士のたく火の 夜は燃え', '昼は消えつつ ものをこそ思へ', '大中臣能宣朝臣', 'みかき', '三字'],
+      [50, '君がため 惜しからざりし 命さへ', '長くもがなと 思ひぬるかな', '藤原義孝', 'きみがため お', '大山札'],
+      [51, 'かくとだに えやはいぶきの さしも草', 'さしも知らじな 燃ゆる思ひを', '藤原実方朝臣', 'かくと', '三字'],
+      [52, '明けぬれば 暮るるものとは 知りながら', 'なほうらめしき 朝ぼらけかな', '藤原道信朝臣', 'あけ', '二字'],
+      [53, '嘆きつつ ひとりぬる夜の 明くる間は', 'いかに久しき ものとかは知る', '右大将道綱母', 'なげき', '三字'],
+      [54, '忘れじの 行く末までは かたければ', '今日を限りの 命ともがな', '儀同三司母', 'わすれ', '三字'],
+      [55, '滝の音は 絶えて久しく なりぬれど', '名こそ流れて なほ聞こえけれ', '大納言公任', 'たきの', '三字'],
+      [56, 'あらざらむ この世のほかの 思ひ出に', '今ひとたびの 逢ふこともがな', '和泉式部', 'あらざ', '三字'],
+      [57, 'めぐりあひて 見しやそれとも わかぬまに', '雲がくれにし 夜半の月かな', '紫式部', 'め', '一字', '偶然再会した幼馴染の友が慌ただしく立ち去った寂しさを、雲隠れする月に託した歌。', 'せっかく巡り逢えたのに、雲の中に隠れてしまった夜半の月のように慌ただしく帰ってしまわれた。', '一字決まりの「め」。第一音の母音を濁さず、針の穴を通すように正確に発声します。', '「一瞬の月のように見事な一音！選手たちの手が宙を舞うたぞ！」'],
+      [58, '有馬山 猪名の笹原 風吹けば', 'いでそよ人を 忘れやはする', '大弐三位', 'ありま', '三字'],
+      [59, 'やすらはで 寝なましものを さ夜更けて', 'かたぶくまでの 月を見しかな', '赤染衛門', 'やす', '二字'],
+      [60, '大江山 いく野の道の 遠ければ', 'まだふみもみず 天の橋立', '小式部内侍', 'おほえ', '三字'],
+      [61, 'いにしへの 奈良の都の 八重桜', 'けふ九重に にほひぬるかな', '伊勢大輔', 'いにし', '三字'],
+      [62, '夜をこめて 鳥のそら音は はかるとも', 'よに逢坂の 関はゆるさじ', '清少納言', 'よを', '二字'],
+      [63, '今はただ 思ひ絶えなむ とばかりを', '人づてならで 言ふよしもがな', '左京大夫道雅', 'いまは', '三字'],
+      [64, '朝ぼらけ 宇治の川霧 たえだえに', 'あらはれわたる 瀬々の網代木', '権中納言定頼', 'あさぼらけ う', '大山札'],
+      [65, '恨みわび 干さぬ袖だに あるものを', '恋に朽ちなむ 名こそ惜しけれ', '相模', 'うら', '二字'],
+      [66, 'もろともに あはれと思へ 山桜', '花よりほかに 知る人もなし', '前大僧正行尊', 'もろ', '二字'],
+      [67, '春の夜の 夢ばかりなる 手枕に', 'かひなく立たむ 名こそ惜しけれ', '周防内侍', 'はるの', '三字'],
+      [68, '心にも あらでうき世に ながらへば', '恋しかるべき 夜半の月かな', '三条院', 'こころに', '四字'],
+      [69, '嵐吹く 三室の山のお もみぢ葉は', '竜田の川の 錦なりけり', '能因法師', 'あらし', '三字'],
+      [70, 'さびしさに 宿を立ち出でて ながむれば', 'いづこも同じ 秋の夕ぐれ', '良暹法師', 'さ', '一字', '寂しさに耐えかねて庵を出たものの、どこもかしこも同じ秋の寂寥に包まれている絶望美。', '寂しさに耐えかねて草庵の外に出てみたが、どこも同じように寂しい秋の夕暮れであった。', '一字決まり「さ」。「す」と混同させない澄んだ無声音の立ち上がりを極めます。', '「秋の夕暮れの寂しさが、余韻とともに心に染み渡ったぞ。」'],
+      [71, '夕されば 門田の稲葉 おとづれて', '芦のまろ屋に 秋風ぞ吹く', '大納言経信', 'ゆふ', '二字'],
+      [72, '音に聞く 高師の浜の あだ波は', 'かけじや袖の ぬれもこそすれ', '祐子内親王家紀伊', 'おとに', '三字'],
+      [73, '高砂の 尾の上の桜 咲きにけり', '外山の霞 立たずもあらなむ', '前権中納言匡房', 'たか', '二字'],
+      [74, '憂かりける 人を初瀬の 山おろしよ', '激しかれとは 祈らぬものを', '源俊頼朝臣', 'うか', '二字'],
+      [75, '契りおきし させもが露を 命にて', 'あはれ今年の 秋もいぬめり', '藤原基俊', 'ちぎりお', '四字'],
+      [76, 'わたの原 漕ぎ出でて見れば ひさかたの', '雲居にまがふ 沖つ白波', '法性寺入道前関白太政大臣', 'わたのはら こ', '大山札'],
+      [77, '瀬をはやみ 岩にせかるる 滝川の', 'われても末に あはむとぞ思ふ', '崇徳院', 'せ', '一字', '激流が岩に砕かれて二つに分かれてもやがて合流するように、運命の再会を誓う。', '急流が岩にせき止められて二つに分かれても再び一つになるように、私たちもいつか必ず再会しましょう。', '一字決まり「せ」。激流の迸りと運命を貫く激情を、気迫を込めて押し出します。', '「岩をも砕く鋭き初声！この崇徳院の想い、しかと受け止めたぞ。」'],
+      [78, '淡路島 かよふ千鳥の 鳴く声に', '幾夜寝覚めぬ 須磨の関守', '源兼昌', 'あはぢ', '三字'],
+      [79, '秋風に たなびく雲の 絶え間より', 'もれ出づる月の 影のさやけさ', '左京大夫顕輔', 'あきか', '三字'],
+      [80, '長からむ 心も知らず 黒髪の', '乱れてけさは ものをこそ思へ', '待賢門院堀河', 'ながか', '三字'],
+      [81, 'ほととぎす 鳴きつる方を ながむれば', 'ただ有明の 月ぞ残れる', '後徳大寺左大臣', 'ほ', '一字'],
+      [82, '思ひわび さても命は あるものを', '憂きに堪へぬは 涙なりけり', '道因法師', 'おも', '二字'],
+      [83, '世の中よ 道こそなけれ 思ひ入る', '山の奥にも 鹿ぞ鳴くなる', '皇太后宮大夫俊成', 'よのなかよ', '四字'],
+      [84, 'ながらへば またこのごろや しのばれむ', '憂しと見し世ぞ 今は恋しき', '藤原清輔朝臣', 'ながら', '三字'],
+      [85, '夜もすがら 物思ふころは 明けやらで', '閨のひまさへ つれなかりけり', '俊恵法師', 'よも', '二字'],
+      [86, '嘆けとて 月やはものを 思はする', 'かこち顔なる わが涙かな', '西行法師', 'なげけ', '三字'],
+      [87, '村雨の 露もまだひぬ まきの葉に', '霧たちのぼる 秋の夕ぐれ', '寂蓮法師', 'む', '一字', '通り雨の雫が残る槇の葉から夕霧が立ち上る、静謐な幽玄の世界を水墨画のように描く。', 'にわか雨の露もまだ乾ききっていない槇の葉に、霧が立ち上っていく物寂しい秋の夕暮れである。', '一字決まり「む」。鼻腔共鳴を活かし、静寂から立ち上げます。', '「静寂の中にフッと立ち上がる完璧な『む』！息を呑んだぞ。」'],
+      [88, '難波江の 芦のかりねの ひとよゆゑ', 'みをつくしてや 恋ひわたるべき', '皇嘉門院別当', 'なにはえ', '四字'],
+      [89, '玉の緒よ 絶えなば絶えね ながらへば', '忍ぶることの 弱りもぞする', '式子内親王', 'たま', '二字'],
+      [90, '見せばやな 雄島のあまの 袖だにも', '濡れにぞ濡れし 色は変はらず', '殷富門院大輔', 'みせ', '二字'],
+      [91, 'きりぎりす 鳴くや霜夜の さむしろに', '衣かたしき ひとりかも寝む', '後京極摂政前太政大臣', 'きり', '二字'],
+      [92, 'わが袖は 潮干に見えぬ 沖の石の', '人こそ知らね かわく間もなし', '二条院讃岐', 'わがそ', '三字'],
+      [93, '世の中は 常にもがもな 渚こぐ', 'あまの小舟の 綱手かなしも', '鎌倉右大臣', 'よのなかは', '四字'],
+      [94, 'み吉野の 山の秋風 さ夜更けて', 'ふるさと寒く 衣うつなり', '前参議雅経', 'みよ', '二字'],
+      [95, 'おほけなく うき世の民に おほふかな', 'わが立つ杣に 墨染の袖', '前大僧正慈円', 'おほけ', '三字'],
+      [96, '花さそふ 嵐の庭の 雪ならで', 'ふりゆくものは わが身なりけり', '前大納言公経', 'はなさ', '三字'],
+      [97, '来ぬ人を まつほの浦の 夕なぎに', '焼くや藻塩の 身もこがれつつ', '権中納言定家', 'こぬ', '二字'],
+      [98, '風そよぐ ならの小川の 夕ぐれは', 'みそぎぞ夏の しるしなりける', '従二位家隆', 'かぜそ', '三字'],
+      [99, '人もをし 人も恨めし あぢきなく', '世を思ふゆゑに もの思ふ身は', '後鳥羽院', 'ひとも', '三字'],
+      [100, '百敷や 古き軒端の しのぶにも', 'なほあまりある 昔なりけり', '順徳院', 'ももし', '三字']
     ];
 
-    for (let i = 1; i <= 100; i++) {
-      if (!HYAKUNIN_ISSHU.find(p => p.no === i)) {
-        let t = '通常';
-        if ([14, 16, 18, 22].includes(i)) t = '二字';
-        HYAKUNIN_ISSHU.push({
-          id: i, no: i, kami: `第${i}首の上の句`, shimo: `第${i}首の下の句`, author: `歌人 ${i}`,
-          kimari: `${i}首`, type: t, summary: `第${i}首の解説。一定のテンポで稽古しましょう。`,
-          translation: `第${i}首の現代語訳。`, tips: `初声をクリアに立ち上げます。`,
-          joke: '「良き発声！この調子で稽古を重ねられよ。」'
-        });
-      }
-    }
-    HYAKUNIN_ISSHU.sort((a, b) => (a.no === '序' ? -1 : (b.no === '序' ? 1 : a.no - b.no)));
+    const HYAKUNIN_ISSHU = RAW_POEMS.map((p, idx) => {
+      const [no, kami, shimo, author, kimari, type, summary, translation, tips, joke] = p;
+      return {
+        id: idx,
+        no: no,
+        kami: kami,
+        shimo: shimo,
+        author: author,
+        kimari: kimari,
+        type: type,
+        summary: summary || `第${no}首の心。決まり字「${kimari}」を意識し、息を整えて稽古しましょう。`,
+        translation: translation || `「${kami} ${shimo}」の意。情景を心に浮かべながら詠み上げます。`,
+        tips: tips || `初声の頭の音をクリアに立ち上げ、一定の速度で下の句へ繋げます。`,
+        joke: joke || '「良き発声！この調子で100首稽古を重ねられよ。」'
+      };
+    });
 
-    let currentCardIndex = 0, practiceSequence = [...Array(HYAKUNIN_ISSHU.length).keys()], sequenceCursor = 0;
+    let currentCardIndex = 0;
+    let prevCardIndex = 1; // 前歌のインデックス
+    let practiceSequence = [...Array(HYAKUNIN_ISSHU.length).keys()], sequenceCursor = 0;
 
     let savedTimes = null;
     try { savedTimes = JSON.parse(localStorage.getItem('karuta_target_times')); } catch(e) {}
@@ -232,19 +340,48 @@
     const bubblePoetName = document.getElementById('bubblePoetName'), bubblePoetComment = document.getElementById('bubblePoetComment');
     const rakkanStampContainer = document.getElementById('rakkanStampContainer'), rakkanStamp = document.getElementById('rakkanStamp');
     const toggleTipsDetailBtn = document.getElementById('toggleTipsDetailBtn'), poemDetailSection = document.getElementById('poemDetailSection');
-    const poemBadge = document.getElementById('poemBadge'), kimarijiBadge = document.getElementById('kimarijiBadge'), cardAuthor = document.getElementById('cardAuthor'), kamiText = document.getElementById('kamiText'), shimoText = document.getElementById('shimoText'), poemMiniSummary = document.getElementById('poemMiniSummary'), poemTranslation = document.getElementById('poemTranslation'), poemReadingTip = document.getElementById('poemReadingTip'), shuffledCountText = document.getElementById('shuffledCountText');
+    const poemBadge = document.getElementById('poemBadge'), kimarijiBadge = document.getElementById('kimarijiBadge'), cardAuthor = document.getElementById('cardAuthor');
+    const kamiText = document.getElementById('kamiText'), shimoText = document.getElementById('shimoText');
+    const prevCardBadge = document.getElementById('prevCardBadge'), prevShimoText = document.getElementById('prevShimoText');
+    const poemMiniSummary = document.getElementById('poemMiniSummary'), poemTranslation = document.getElementById('poemTranslation'), poemReadingTip = document.getElementById('poemReadingTip'), shuffledCountText = document.getElementById('shuffledCountText');
 
-    function displayCard(card) {
+    // 前歌を現在の歌以外からランダム選定
+    function pickRandomPrevCard(currentIdx) {
+      let candidateIdx;
+      do {
+        candidateIdx = Math.floor(Math.random() * HYAKUNIN_ISSHU.length);
+      } while (candidateIdx === currentIdx && HYAKUNIN_ISSHU.length > 1);
+      return candidateIdx;
+    }
+
+    function displayCard(card, prevCard) {
       poemBadge.textContent = card.no === '序' ? '序歌' : `第${card.no}首`;
-      kimarijiBadge.textContent = card.kimari; cardAuthor.textContent = card.author; kamiText.textContent = card.kami; shimoText.textContent = card.shimo;
-      poemMiniSummary.textContent = card.summary; poemTranslation.textContent = card.translation; poemReadingTip.textContent = card.tips;
+      kimarijiBadge.textContent = card.kimari;
+      cardAuthor.textContent = card.author;
+      kamiText.textContent = card.kami;
+      shimoText.textContent = card.shimo;
+
+      // 前歌
+      prevCardBadge.textContent = prevCard.no === '序' ? '序歌' : `第${prevCard.no}首 (${prevCard.author})`;
+      prevShimoText.textContent = prevCard.shimo;
+
+      poemMiniSummary.textContent = card.summary;
+      poemTranslation.textContent = card.translation;
+      poemReadingTip.textContent = card.tips;
       shuffledCountText.textContent = `${sequenceCursor + 1} / ${HYAKUNIN_ISSHU.length}首`;
-      rakkanStampContainer.classList.add('hidden'); poetSpeechBubble.classList.add('hidden');
+
+      rakkanStampContainer.classList.add('hidden');
+      poetSpeechBubble.classList.add('hidden');
     }
 
     function selectCardByIndex(idx) {
-      currentCardIndex = idx; sequenceCursor = practiceSequence.indexOf(idx); if (sequenceCursor === -1) sequenceCursor = 0;
-      resetReaderState(); displayCard(HYAKUNIN_ISSHU[currentCardIndex]);
+      currentCardIndex = idx;
+      prevCardIndex = pickRandomPrevCard(currentCardIndex);
+      sequenceCursor = practiceSequence.indexOf(idx);
+      if (sequenceCursor === -1) sequenceCursor = 0;
+
+      resetReaderState();
+      displayCard(HYAKUNIN_ISSHU[currentCardIndex], HYAKUNIN_ISSHU[prevCardIndex]);
     }
 
     const TOTAL_CIRCUMFERENCE = 289;
@@ -257,12 +394,17 @@
       stopRecording();
 
       phaseLabel.textContent = '待機中';
-      phaseLabel.className = 'text-xs font-bold tracking-widest text-stone-400';
-      phaseTimerText.textContent = targetTimes.kami.toFixed(1);
-      phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
+      phaseLabel.className = 'text-[11px] font-bold tracking-tight text-stone-400 text-center leading-tight';
+      phaseTimerText.textContent = targetTimes.shimo.toFixed(1);
+      phaseTargetSub.textContent = `前歌目標 ${targetTimes.shimo.toFixed(1)}s`;
       totalTimeElapsed.textContent = '0.0s';
       progressCircle.style.strokeDashoffset = 0;
-      progressCircle.setAttribute('stroke', '#3b82f6');
+      progressCircle.setAttribute('stroke', '#a855f7');
+
+      // 本文ハイライト解除
+      kamiText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
+      shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
+      prevShimoText.className = 'text-sm font-mincho font-semibold text-stone-700 pl-1';
 
       mainActionBtn.className = 'w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-blue-600 active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
       mainActionBtn.innerHTML = `<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>読唱開始</span>`;
@@ -273,7 +415,7 @@
     function startPractice() {
       if (currentPhase === 'idle' || currentPhase === 'finished') {
         startRecording();
-        startPhase('kami');
+        startPhase('prev_shimo');
       } else {
         pausePractice();
       }
@@ -289,9 +431,10 @@
 
       mainActionBtnText.textContent = '再開する';
       phaseLabel.textContent = '一時停止';
-      phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400';
+      phaseLabel.className = 'text-[11px] font-bold tracking-tight text-amber-400 text-center leading-tight';
     }
 
+    // 7段階フェーズ移行（前歌 下の句 ➔ 余韻 ➔ 間合い ➔ 本歌 上の句 ➔ 余韻 ➔ 間合い ➔ 本歌 下の句）
     function startPhase(phase) {
       if (timerAnimFrame) {
         cancelAnimationFrame(timerAnimFrame);
@@ -300,36 +443,67 @@
       currentPhase = phase;
       phaseStartTime = performance.now();
 
-      if (phase === 'kami') {
-        phaseLabel.textContent = '上の句 (助走〜本歌)';
-        phaseLabel.className = 'text-xs font-bold tracking-widest text-blue-400';
-        phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
-        progressCircle.setAttribute('stroke', '#3b82f6');
+      // 短冊内のハイライトリセット
+      prevShimoText.className = 'text-sm font-mincho font-semibold text-stone-700 pl-1';
+      kamiText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
+      shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors';
+
+      if (phase === 'prev_shimo') {
+        phaseLabel.textContent = '① 前歌: 下の句';
+        phaseLabel.className = 'text-[11px] font-bold tracking-tight text-purple-400 text-center leading-tight';
+        phaseTargetSub.textContent = `目標 ${targetTimes.shimo.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#a855f7');
+        prevShimoText.className = 'text-sm font-mincho font-bold text-amber-900 bg-amber-200/80 px-1 py-0.5 rounded pl-1 transition-all';
         mainActionBtn.innerHTML = `<span>⏸</span><span>一時停止</span>`;
-      } else if (phase === 'yoin') {
-        phaseLabel.textContent = '余韻 (フェードアウト)';
-        phaseLabel.className = 'text-xs font-bold tracking-widest text-emerald-400';
+      } else if (phase === 'prev_yoin') {
+        phaseLabel.textContent = '② 前歌: 余韻';
+        phaseLabel.className = 'text-[11px] font-bold tracking-tight text-purple-300 text-center leading-tight';
         phaseTargetSub.textContent = `目標 ${targetTimes.yoin.toFixed(1)}s`;
-        progressCircle.setAttribute('stroke', '#10b981');
-      } else if (phase === 'maai') {
-        phaseLabel.textContent = '間合い・空時間 (静寂)';
-        phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400';
+        progressCircle.setAttribute('stroke', '#c084fc');
+      } else if (phase === 'prev_maai') {
+        phaseLabel.textContent = '③ 空時間 (静寂)';
+        phaseLabel.className = 'text-[11px] font-bold tracking-tight text-amber-400 text-center leading-tight';
         phaseTargetSub.textContent = `規定 ${targetTimes.maai.toFixed(1)}s`;
         progressCircle.setAttribute('stroke', '#eab308');
-      } else if (phase === 'shimo') {
-        phaseLabel.textContent = '下の句 (本歌)';
-        phaseLabel.className = 'text-xs font-bold tracking-widest text-red-400';
+      } else if (phase === 'honga_kami') {
+        phaseLabel.textContent = '④ 本歌: 上の句';
+        phaseLabel.className = 'text-[11px] font-bold tracking-tight text-blue-400 text-center leading-tight';
+        phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#3b82f6');
+        kamiText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-blue-900 bg-blue-200/70 rounded px-1 transition-all';
+      } else if (phase === 'honga_yoin') {
+        phaseLabel.textContent = '⑤ 本歌: 余韻';
+        phaseLabel.className = 'text-[11px] font-bold tracking-tight text-emerald-400 text-center leading-tight';
+        phaseTargetSub.textContent = `目標 ${targetTimes.yoin.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#10b981');
+      } else if (phase === 'honga_maai') {
+        phaseLabel.textContent = '⑥ 空時間 (静寂)';
+        phaseLabel.className = 'text-[11px] font-bold tracking-tight text-amber-400 text-center leading-tight';
+        phaseTargetSub.textContent = `規定 ${targetTimes.maai.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#eab308');
+      } else if (phase === 'honga_shimo') {
+        phaseLabel.textContent = '⑦ 本歌: 下の句';
+        phaseLabel.className = 'text-[11px] font-bold tracking-tight text-red-400 text-center leading-tight';
         phaseTargetSub.textContent = `目標 ${targetTimes.shimo.toFixed(1)}s`;
         progressCircle.setAttribute('stroke', '#ef4444');
+        shimoText.className = 'flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-red-900 bg-red-200/70 rounded px-1 transition-all';
       }
 
       tickTimer();
     }
 
+    function getPhaseTargetDuration(phase) {
+      if (phase === 'prev_shimo' || phase === 'honga_shimo') return targetTimes.shimo;
+      if (phase === 'prev_yoin' || phase === 'honga_yoin') return targetTimes.yoin;
+      if (phase === 'prev_maai' || phase === 'honga_maai') return targetTimes.maai;
+      if (phase === 'honga_kami') return targetTimes.kami;
+      return 5.0;
+    }
+
     function tickTimer() {
       const now = performance.now();
       const elapsed = Math.max(0, (now - phaseStartTime) / 1000);
-      const targetDuration = targetTimes[currentPhase];
+      const targetDuration = getPhaseTargetDuration(currentPhase);
 
       const remaining = Math.max(0, targetDuration - elapsed);
       phaseTimerText.textContent = remaining.toFixed(1);
@@ -339,10 +513,13 @@
 
       if (elapsed >= targetDuration) {
         timerAnimFrame = null;
-        if (currentPhase === 'kami') startPhase('yoin');
-        else if (currentPhase === 'yoin') startPhase('maai');
-        else if (currentPhase === 'maai') startPhase('shimo');
-        else if (currentPhase === 'shimo') finishPoemReading();
+        if (currentPhase === 'prev_shimo') startPhase('prev_yoin');
+        else if (currentPhase === 'prev_yoin') startPhase('prev_maai');
+        else if (currentPhase === 'prev_maai') startPhase('honga_kami');
+        else if (currentPhase === 'honga_kami') startPhase('honga_yoin');
+        else if (currentPhase === 'honga_yoin') startPhase('honga_maai');
+        else if (currentPhase === 'honga_maai') startPhase('honga_shimo');
+        else if (currentPhase === 'honga_shimo') finishPoemReading();
         return;
       }
 
@@ -353,8 +530,8 @@
       currentPhase = 'finished';
       stopRecording();
 
-      phaseLabel.textContent = '読了 (お疲れ様でした)';
-      phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-300';
+      phaseLabel.textContent = '読了 (満願)';
+      phaseLabel.className = 'text-[11px] font-bold tracking-tight text-amber-300 text-center leading-tight';
       phaseTimerText.textContent = '0.0';
       progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE;
       mainActionBtn.className = 'w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-emerald-700 active:bg-emerald-800 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
@@ -383,8 +560,8 @@
         mediaRecorder.onstop = () => {
           lastAudioBlob = new Blob(recordedChunks, { type: mime });
           reviewPanel.classList.remove('hidden');
-          const totalTarget = targetTimes.kami + targetTimes.yoin + targetTimes.maai + targetTimes.shimo;
-          recordedDurationText.textContent = `${totalTarget.toFixed(1)}s`;
+          const totalTarget = (targetTimes.shimo * 2) + (targetTimes.yoin * 2) + (targetTimes.maai * 2) + targetTimes.kami;
+          recordedDurationText.textContent = `${totalTarget.toFixed(1)}s (通し)`;
         };
         mediaRecorder.start(); isRecording = true;
         micRecordDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-ping'; micStatusText.textContent = '録音中';
@@ -429,9 +606,11 @@
 
     async function reviewAudioWithAi() {
       if (!lastAudioBlob) return alert('録音された音声がありません。まず読唱を行ってください。');
-      const card = HYAKUNIN_ISSHU[currentCardIndex], modal = document.getElementById('aiModal');
+      const honga = HYAKUNIN_ISSHU[currentCardIndex];
+      const prev = HYAKUNIN_ISSHU[prevCardIndex];
+      const modal = document.getElementById('aiModal');
       document.getElementById('aiModalTitle').textContent = '🥋 読手専任師範の音声添削';
-      document.getElementById('aiModalContent').innerHTML = `<div class="flex flex-col items-center py-8 space-y-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div><span class="text-stone-300 text-sm">録音音声を師範が拝聴中...</span></div>`;
+      document.getElementById('aiModalContent').innerHTML = `<div class="flex flex-col items-center py-8 space-y-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div><span class="text-stone-300 text-sm">一連の読唱音声を師範が拝聴中...</span></div>`;
       modal.classList.remove('hidden');
       try {
         const reader = new FileReader(); reader.readAsDataURL(lastAudioBlob);
@@ -440,23 +619,22 @@
             contents: [{
               parts: [
                 { inlineData: { mimeType: lastAudioBlob.type || 'audio/webm', data: reader.result.split(',')[1] } },
-                { text: `あなたは全日本かるた協会のA級公認読手・専任読手の指導員です。
-ユーザーが練習で読唱した添付の音声ファイルを厳正に聴いて講評してください。
+                { text: `あなたは全日本かるた協会のA級公認読手・専任読手の筆頭指導員です。
+ユーザーが競技かるたの公式規程に則り、【前歌の下の句】から【本歌の上の句・下の句】まで通しで朗詠した録音音声を厳正に講評してください。
 
-お題：${card.no}番 【${card.kami} / ${card.shimo}】（決まり字：${card.kimari}）
+【読唱内容】
+・前歌の下の句：【${prev.shimo}】（${prev.no}番 ${prev.author}）
+・本歌：${honga.no}番 【${honga.kami} / ${honga.shimo}】（決まり字：${honga.kimari} / ${honga.author}）
 
 【最重要判定ルール】
 ・もし音声が無音、息の音や生活ノイズのみ、または歌を朗詠していない場合は、絶対に褒めたり高得点をつけたりせず、「声が確認できませんでした。マイクに向かって声を出して詠んでください。」と厳格に伝えてください（得点は0点〜10点）。
-・実際に声を出して歌を詠んでいる場合のみ、以下の形式でわかりやすく改行してアドバイスしてください：
+・実際に朗詠されている場合、以下の観点で改行を交えてアドバイスしてください：
 
-■ 初声と決まり字の通り具合：
-（選手が払う一音目がクリアに立っているか）
+■ 前歌下の句から本歌への間合い（1.0秒の静寂が守られているか）：
 
-■ テンポ・間合いの正確さ：
-（上下の句の長さ、1.0秒の静寂が保てているか）
+■ 本歌の初声と決まり字の通り具合（選手が一瞬で反応できる澄んだ声か）：
 
-■ 余韻と響き：
-（息の抜け方、美しくフェードアウトできているか）
+■ 余韻の引き方と息継ぎ（美しくフェードアウトし、次の句へ向けて息が整っているか）：
 
 ■ 師範の総合評価：【◯◯点 / 100点】
 （一言激励のメッセージ）` }
@@ -494,7 +672,7 @@
 
       const filtered = HYAKUNIN_ISSHU.filter(card => {
         if (currentFilterType === 'ichiji') {
-          return ['む', 'す', 'め', 'ふ', 'さ', 'ほ', 'せ'].includes(card.kimari);
+          return card.type === '一字';
         } else if (currentFilterType === 'niji') {
           return card.type === '二字';
         } else if (currentFilterType === 'ooyama') {
@@ -534,7 +712,7 @@
               </div>
             </div>
           </div>
-          <button class="text-xs px-2.5 py-1 rounded bg-stone-700 text-stone-200 active:scale-95">選ぶ</button>
+          <button class="text-xs px-2.5 py-1 rounded bg-stone-700 text-stone-200 active:scale-95">本歌に選ぶ</button>
         `;
         item.addEventListener('click', () => {
           selectCardByIndex(c.id);
@@ -544,7 +722,7 @@
       });
     }
 
-    // --- 秒数設定スライダーのリアルタイム同期＆保存処理（MAX 7.0秒対応） ---
+    // 秒数スライダー連動
     const inputKami = document.getElementById('inputKami'), valKami = document.getElementById('valKami');
     const inputYoin = document.getElementById('inputYoin'), valYoin = document.getElementById('valYoin');
     const inputMaai = document.getElementById('inputMaai'), valMaai = document.getElementById('valMaai');
@@ -560,8 +738,8 @@
     function saveAndApplyTimes() {
       localStorage.setItem('karuta_target_times', JSON.stringify(targetTimes));
       if (currentPhase === 'idle') {
-        phaseTimerText.textContent = targetTimes.kami.toFixed(1);
-        phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
+        phaseTimerText.textContent = targetTimes.shimo.toFixed(1);
+        phaseTargetSub.textContent = `前歌目標 ${targetTimes.shimo.toFixed(1)}s`;
       }
     }
 
@@ -662,7 +840,6 @@
       document.getElementById('settingsModal').classList.add('hidden');
     });
 
-    // 初期起動
     syncSliderDisplay();
     selectCardByIndex(0);
   </script>
