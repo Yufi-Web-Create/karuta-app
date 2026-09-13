@@ -183,7 +183,7 @@
       </div>
     </div>
 
-    <!-- 設定モーダル（接続テスト機能付き） -->
+    <!-- 設定モーダル -->
     <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
       <div class="bg-stone-900 border border-stone-700 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 overflow-y-auto max-h-[90vh]">
         <div class="flex justify-between items-center border-b border-stone-800 pb-2 mb-4"><h2 class="text-sm font-bold text-stone-200">読唱秒数・連携設定</h2><button id="closeSettingsBtn" class="text-stone-400 hover:text-white p-1">✕</button></div>
@@ -299,7 +299,7 @@
       [79, '秋風に たなびく雲の 絶え間より', 'もれ出づる月の 影のさやけさ', '左京大夫顕輔', 'あきか', '三字'],
       [80, '長からむ 心も知らず 黒髪の', '乱れてけさは ものをこそ思へ', '待賢門院堀河', 'ながか', '三字'],
       [81, 'ほととぎす 鳴きつる方を ながむれば', 'ただ有明の 月ぞ残れる', '後徳大寺左大臣', 'ほ', '一字'],
-      [82, '思ひわび さても命は あるものを', '憂きに堪へぬは 涙なりけり', '道因法師', 'おも', '二字'],
+      [82, '思ひわび さても命は あるものを', '憂きに堪へぬは 涙なりけり', '道因法師', 'おom', '二字'],
       [83, '世の中よ 道こそなけれ 思ひ入る', '山の奥にも 鹿ぞ鳴くなる', '皇太后宮大夫俊成', 'よのなかよ', '四字'],
       [84, 'ながらへば またこのごろや しのばれむ', '憂しと見し世ぞ 今は恋しき', '藤原清輔朝臣', 'ながら', '三字'],
       [85, '夜もすがら 物思ふころは 明けやらで', '閨のひまさへ つれなかりけり', '俊恵法師', 'よも', '二字'],
@@ -750,19 +750,17 @@
       checkVol();
     }
 
-    async function callGeminiApi({ model, payload }) {
+    async function callGeminiApi({ model = "gemini-3.8-flash", payload }) {
       const apiKey = customApiKey.trim();
       let proxy = customProxyUrl.trim();
       if (!proxy) proxy = DEFAULT_PROXY_URL;
       
-      // 末尾スラッシュを削除してURLを正規化
       proxy = proxy.replace(/\/+$/, "");
 
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 45000);
 
       try {
-        // 1. 個人用APIキーがある場合はGoogle直接接続
         if (apiKey) {
           const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
             method: "POST",
@@ -779,7 +777,6 @@
           return await res.json();
         }
 
-        // 2. 中継サーバー（Cloudflare Worker）経由
         const headers = { "Content-Type": "application/json" };
         if (customPasscode.trim()) headers["X-Passcode"] = customPasscode.trim();
         
@@ -866,7 +863,7 @@
           }]
         };
 
-        const res = await callGeminiApi({ model: "gemini-2.5-flash", payload });
+        const res = await callGeminiApi({ model: "gemini-3.8-flash", payload });
         const text = res.candidates?.[0]?.content?.parts?.[0]?.text || "講評の取得に失敗しました。";
         document.getElementById('aiModalContent').innerHTML = `
           <div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed space-y-3">
@@ -879,7 +876,7 @@
           <div class="text-red-300 p-4 bg-red-950/60 rounded-xl border border-red-800 space-y-2 text-xs sm:text-sm">
             <div class="font-bold text-red-200 text-sm sm:text-base">⚠️ 添削エラーが発生しました</div>
             <pre class="whitespace-pre-wrap text-red-300 font-mono text-[11px]">${errMsg}</pre>
-            <div class="text-stone-400 text-[11px] pt-1 border-t border-red-900/60">※ 右上の歯車（設定）で「中継疎通テスト」を試すか、「個人用APIキー」を設定してください。</div>
+            <div class="text-stone-400 text-[11px] pt-1 border-t border-red-900/60">※ 右上の歯車（設定）で「個人用APIキー」を直接入力すると、Workerを経由せず確実に動作します。</div>
           </div>
         `;
       }
@@ -912,7 +909,7 @@
           }]
         };
 
-        const res = await callGeminiApi({ model: "gemini-2.5-flash", payload });
+        const res = await callGeminiApi({ model: "gemini-3.8-flash", payload });
         const text = res.candidates?.[0]?.content?.parts?.[0]?.text || "指南テキストの取得に失敗しました。";
         document.getElementById('aiModalContent').innerHTML = `
           <div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed space-y-3">
@@ -925,7 +922,7 @@
           <div class="text-red-300 p-4 bg-red-950/60 rounded-xl border border-red-800 space-y-2 text-xs sm:text-sm">
             <div class="font-bold text-red-200 text-sm sm:text-base">⚠️ 指南エラーが発生しました</div>
             <pre class="whitespace-pre-wrap text-red-300 font-mono text-[11px]">${errMsg}</pre>
-            <div class="text-stone-400 text-[11px] pt-1 border-t border-red-900/60">※ 右上の歯車（設定）で「中継疎通テスト」を試すか、「個人用APIキー」を設定してください。</div>
+            <div class="text-stone-400 text-[11px] pt-1 border-t border-red-900/60">※ 右上の歯車（設定）で「個人用APIキー」を直接入力すると、Workerを経由せず確実に動作します。</div>
           </div>
         `;
       }
@@ -1147,7 +1144,6 @@
     });
     document.getElementById('closeSettingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.add('hidden'));
 
-    // 中継サーバーのURLを初期値に戻す
     document.getElementById('resetProxyDefaultBtn').addEventListener('click', () => {
       customProxyUrl = DEFAULT_PROXY_URL;
       document.getElementById('customProxyUrlInput').value = DEFAULT_PROXY_URL;
@@ -1155,7 +1151,6 @@
       alert('中継サーバーURLを初期化しました');
     });
 
-    // 疎通テストボタン
     document.getElementById('testProxyBtn').addEventListener('click', async () => {
       const resultEl = document.getElementById('testProxyResult');
       let testUrl = document.getElementById('customProxyUrlInput').value.trim() || DEFAULT_PROXY_URL;
