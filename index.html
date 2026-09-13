@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>読手練習アプリ「調（しらべ）」</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@400;600;800&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
+    body { font-family: 'Zen Kaku Gothic New', sans-serif; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+    .font-mincho { font-family: 'Shippori Mincho', serif; }
+    .writing-vertical { writing-mode: vertical-rl; text-orientation: upright; letter-spacing: 0.18em; }
+    .tanzaku-shadow { box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.3); }
+    .rakkan-seal { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 2px solid #b91c1c; color: #b91c1c; font-family: 'Shippori Mincho', serif; font-weight: 800; font-size: 14px; line-height: 1.1; border-radius: 6px; transform: rotate(-6deg); background-color: rgba(254, 226, 226, 0.9); box-shadow: 1px 2px 4px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body class="bg-stone-900 text-stone-100 min-h-screen overflow-y-auto selection:bg-amber-800 selection:text-white" id="mainContainer">
+  <div class="max-w-md mx-auto min-h-screen flex flex-col justify-between p-3 sm:p-4 relative pb-28">
+    <header class="flex justify-between items-center py-2 px-1 border-b border-stone-800 shrink-0">
+      <div class="flex items-center space-x-2">
+        <span class="w-3 h-3 rounded-full bg-amber-600 shadow-[0_0_8px_rgba(217,119,6,0.6)]"></span>
+        <h1 class="text-lg font-mincho font-bold tracking-widest text-stone-200">調 <span class="text-xs text-stone-400 font-sans tracking-normal font-normal">競技かるた読手稽古</span></h1>
+      </div>
+      <div class="flex items-center space-x-1.5">
+        <button id="openAiGuideBtn" class="text-xs px-2 py-1 rounded bg-indigo-950/80 border border-indigo-700/60 text-indigo-200 flex items-center space-x-1 active:scale-95 transition-all"><span>✨</span><span>指南</span></button>
+        <button id="wakeLockBtn" class="text-xs px-2 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700 active:scale-95 transition-all flex items-center space-x-1"><span id="wakeLockIcon">🌙</span><span id="wakeLockText">常時</span></button>
+        <button id="openSettingsBtn" class="text-stone-400 hover:text-stone-200 p-1 rounded-full active:scale-90 transition-transform"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg></button>
+      </div>
+    </header>
+
+    <main class="flex-1 flex flex-col items-center justify-center my-2 relative w-full">
+      <div class="w-full max-w-xs flex justify-between items-center px-2 py-1 mb-1.5 text-xs text-stone-400">
+        <button id="openCardSelectModalBtn" class="flex items-center space-x-1 px-2.5 py-1 rounded bg-stone-800/80 hover:bg-stone-700 text-stone-300 border border-stone-700/60 active:scale-95 transition-all">
+          <span id="poemBadge" class="font-mincho font-bold text-amber-300">序歌</span><span class="text-[10px] text-stone-400">▼ 歌選択</span>
+        </button>
+        <div class="flex items-center space-x-2">
+          <span id="kimarijiBadge" class="bg-amber-950/60 text-amber-300 border border-amber-800/50 px-2.5 py-1 rounded text-xs font-bold tracking-wide">難波津</span>
+        </div>
+      </div>
+
+      <div class="relative w-full max-w-xs bg-[#f4ede2] text-stone-900 rounded-lg p-5 tanzaku-shadow border-2 border-stone-300 flex flex-col justify-between overflow-hidden" style="min-height: 250px;">
+        <div class="absolute inset-0 opacity-10 pointer-events-none" style="background-image: radial-gradient(#6b46c1 0.75px, transparent 0.75px); background-size: 12px 12px;"></div>
+        <div class="flex justify-around items-stretch h-48 py-1 px-2 z-10">
+          <div class="flex flex-col justify-end text-[11px] font-mincho text-stone-500 writing-vertical py-1 border-l border-stone-300/80 pl-2"><span id="cardAuthor">王仁</span></div>
+          <div class="flex flex-col justify-start text-lg sm:text-xl font-mincho font-bold writing-vertical tracking-widest text-stone-800" id="kamiText">難波津に 咲くやこの花</div>
+          <div class="flex flex-col justify-start text-lg sm:text-xl font-mincho font-bold writing-vertical tracking-widest text-stone-800" id="shimoText">冬ごもり 今を春べと 咲くやこの花</div>
+        </div>
+        <div id="rakkanStampContainer" class="absolute right-3 top-3 pointer-events-none z-20 hidden"><div id="rakkanStamp" class="rakkan-seal">達人</div></div>
+        <div class="text-[10px] text-stone-500 text-right tracking-tighter pt-1 border-t border-stone-300/60 z-10 flex justify-between items-center"><span id="shuffledCountText" class="text-stone-400">1 / 100首</span><span class="text-stone-500">全日本かるた協会 読唱規程準拠</span></div>
+      </div>
+
+      <div id="poetSpeechBubble" class="w-full max-w-xs mt-2 px-3 py-2 bg-amber-950/60 border border-amber-700/50 rounded-lg text-xs text-amber-200 hidden transition-all flex items-start space-x-2">
+        <span class="text-base">📜</span><div class="flex-1 leading-snug"><span class="font-bold text-amber-300" id="bubblePoetName">歌人</span>: <span id="bubblePoetComment" class="text-stone-200">「見事な読唱であったぞ！」</span></div>
+      </div>
+
+      <div class="w-full max-w-xs mt-2 bg-stone-800/80 border border-stone-700/80 rounded-lg p-2.5 text-xs text-stone-300 transition-all">
+        <div class="flex items-center justify-between text-stone-400 mb-1">
+          <span class="flex items-center space-x-1 font-bold text-amber-400"><span>💡</span><span>歌の心・情景</span></span>
+          <button id="toggleTipsDetailBtn" class="text-[10px] text-stone-400 hover:text-stone-200 underline">詳細を開く</button>
+        </div>
+        <p id="poemMiniSummary" class="text-[11px] text-stone-300 leading-snug">冬の寒さに耐え、春の訪れとともに咲き誇る梅の花を祝う、かるたの幕開けを飾る伝統の序歌。</p>
+        <div id="poemDetailSection" class="hidden mt-2 pt-2 border-t border-stone-700 text-[11px] space-y-1.5">
+          <div><span class="text-stone-400 font-semibold">【現代語訳】</span><p id="poemTranslation" class="text-stone-300 leading-relaxed"></p></div>
+          <div><span class="text-stone-400 font-semibold">【読唱の心得】</span><p id="poemReadingTip" class="text-amber-200/90 leading-relaxed"></p></div>
+        </div>
+      </div>
+
+      <div class="relative flex items-center justify-center my-3 shrink-0">
+        <svg class="w-28 h-28 transform -rotate-90">
+          <circle cx="56" cy="56" r="46" stroke="#292524" stroke-width="8" fill="transparent" />
+          <circle id="progressCircle" cx="56" cy="56" r="46" stroke="#3b82f6" stroke-width="8" fill="transparent" stroke-dasharray="289" stroke-dashoffset="0" stroke-linecap="round" class="transition-all duration-75" />
+        </svg>
+        <div class="absolute flex flex-col items-center justify-center text-center">
+          <span id="phaseLabel" class="text-xs font-bold tracking-widest text-blue-400">上の句</span>
+          <span id="phaseTimerText" class="text-xl font-mono font-bold text-white tracking-tight">5.5</span>
+          <span class="text-[9px] text-stone-500 font-mono" id="phaseTargetSub">目標 5.5s</span>
+        </div>
+      </div>
+
+      <div class="w-full max-w-xs flex items-center space-x-2 px-2 py-1 bg-stone-800/60 rounded border border-stone-700/50">
+        <div class="flex items-center space-x-1 text-[11px] text-stone-400 w-16"><span id="micRecordDot" class="w-2 h-2 rounded-full bg-stone-600"></span><span id="micStatusText">待機</span></div>
+        <div class="flex-1 bg-stone-900 h-2 rounded-full overflow-hidden flex items-center p-0.5"><div id="volumeBar" class="h-full bg-emerald-500 rounded-full transition-all duration-75" style="width: 0%;"></div></div>
+        <span id="totalTimeElapsed" class="font-mono text-xs text-stone-400 w-12 text-right">0.0s</span>
+      </div>
+
+      <div id="reviewPanel" class="w-full max-w-xs mt-2 bg-stone-800/95 border border-stone-700 p-2.5 rounded-lg hidden transition-all flex flex-col space-y-2">
+        <div class="flex justify-between items-center text-xs"><span class="text-stone-300 font-medium">前回の読唱記録</span><span id="recordedDurationText" class="font-mono text-amber-400 font-bold">13.2s</span></div>
+        <div class="flex items-center space-x-2">
+          <button id="playMyAudioBtn" class="flex-1 py-1.5 px-2 rounded bg-stone-700 hover:bg-stone-600 text-xs text-stone-200 flex items-center justify-center space-x-1 active:scale-95 transition-all"><span>▶</span><span>自分の声を聴く</span></button>
+          <button id="requestAiFeedbackBtn" class="flex-1 py-1.5 px-2 rounded bg-indigo-900 hover:bg-indigo-800 text-xs text-indigo-100 font-semibold border border-indigo-600/70 flex items-center justify-center space-x-1 active:scale-95 transition-all"><span>🥋</span><span>AI師範添削</span></button>
+        </div>
+      </div>
+    </main>
+
+    <footer class="w-full max-w-xs mx-auto space-y-2 pt-2 border-t border-stone-800 shrink-0">
+      <button id="mainActionBtn" class="w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-blue-600 active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center space-x-2">
+        <svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+        <span id="mainActionBtnText">読唱開始</span>
+      </button>
+      <div class="grid grid-cols-2 gap-2">
+        <button id="resetPoemBtn" class="py-2.5 px-3 rounded-lg bg-stone-800 active:bg-stone-700 text-stone-300 text-xs font-semibold flex items-center justify-center space-x-1 border border-stone-700 transition-all"><svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg><span>最初から</span></button>
+        <button id="nextCardBtn" class="py-2.5 px-3 rounded-lg bg-stone-800 active:bg-stone-700 text-stone-300 text-xs font-semibold flex items-center justify-center space-x-1 border border-stone-700 transition-all"><span>次の札へ</span><svg class="w-4 h-4 text-stone-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path></svg></button>
+      </div>
+    </footer>
+
+    <!-- 札選択モーダル -->
+    <div id="cardSelectModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+      <div class="bg-stone-900 border border-stone-700 w-full max-w-md h-[85vh] rounded-t-2xl sm:rounded-2xl flex flex-col overflow-hidden">
+        <div class="p-3 border-b border-stone-800 flex justify-between items-center bg-stone-900/90">
+          <h2 class="text-sm font-bold text-stone-200">練習する歌を選択</h2>
+          <button id="closeCardSelectModalBtn" class="text-stone-400 hover:text-white text-lg p-1">✕</button>
+        </div>
+        <div class="p-2.5 bg-stone-950/60 border-b border-stone-800 space-y-2">
+          <input type="text" id="cardSearchInput" placeholder="番号・決まり字・歌人・歌詞で検索..." class="w-full bg-stone-900 border border-stone-700 rounded px-3 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-amber-500">
+          <div class="flex space-x-1 overflow-x-auto pb-1 text-[11px]">
+            <button class="filter-tab-btn px-2.5 py-1 rounded bg-amber-900/40 text-amber-300 border border-amber-700/50" data-filter="all">すべて</button>
+            <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="ichiji">一字決まり (7首)</button>
+            <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="niji">二字決まり</button>
+            <button class="filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700" data-filter="ooyama">大山札 (6字)</button>
+          </div>
+        </div>
+        <div id="cardListContainer" class="flex-1 overflow-y-auto p-2 space-y-1.5 divide-y divide-stone-800/60"></div>
+        <div class="p-2.5 border-t border-stone-800 bg-stone-950 flex justify-between items-center text-xs">
+          <button id="shuffleSelectBtn" class="px-3 py-1.5 rounded bg-stone-800 hover:bg-stone-700 text-stone-300 border border-stone-700 flex items-center space-x-1"><span>🎲</span><span>ランダム選出</span></button>
+          <span id="filteredCountText" class="text-stone-500 text-[11px]">101首中 101首 表示</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- AI指南・添削モーダル -->
+    <div id="aiModal" class="fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+      <div class="bg-stone-900 border border-stone-700 w-full max-w-md max-h-[85vh] rounded-t-2xl sm:rounded-2xl p-5 overflow-y-auto">
+        <div class="flex justify-between items-center border-b border-stone-800 pb-3 mb-3">
+          <div class="flex items-center space-x-2"><span class="text-xl">🥋</span><h2 id="aiModalTitle" class="text-base font-bold text-stone-100">AI師範添削</h2></div>
+          <button id="closeAiModalBtn" class="text-stone-400 hover:text-white text-xl p-1">✕</button>
+        </div>
+        <div id="aiModalContent" class="text-sm sm:text-base leading-relaxed text-stone-200 space-y-4"></div>
+      </div>
+    </div>
+
+    <!-- 設定モーダル -->
+    <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
+      <div class="bg-stone-900 border border-stone-700 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 overflow-y-auto max-h-[90vh]">
+        <div class="flex justify-between items-center border-b border-stone-800 pb-2 mb-4"><h2 class="text-sm font-bold text-stone-200">読唱秒数・連携設定</h2><button id="closeSettingsBtn" class="text-stone-400 hover:text-white p-1">✕</button></div>
+        <div class="space-y-4 text-xs">
+          <div><div class="flex justify-between mb-1"><span class="text-stone-300">上の句 (目標 5.5秒)</span><span id="valKami" class="font-mono text-blue-400">5.5s</span></div><input type="range" id="inputKami" min="4.0" max="7.5" step="0.1" value="5.5" class="w-full accent-blue-500"></div>
+          <div><div class="flex justify-between mb-1"><span class="text-stone-300">余韻 (目標 1.5秒)</span><span id="valYoin" class="font-mono text-emerald-400">1.5s</span></div><input type="range" id="inputYoin" min="0.8" max="2.5" step="0.1" value="1.5" class="w-full accent-emerald-500"></div>
+          <div><div class="flex justify-between mb-1"><span class="text-stone-300">間合い・空時間 (目標 1.0秒)</span><span id="valMaai" class="font-mono text-amber-400">1.0s</span></div><input type="range" id="inputMaai" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full accent-amber-500"></div>
+          <div><div class="flex justify-between mb-1"><span class="text-stone-300">下の句 (目標 5.0秒)</span><span id="valShimo" class="font-mono text-red-400">5.0s</span></div><input type="range" id="inputShimo" min="3.5" max="7.0" step="0.1" value="5.0" class="w-full accent-red-500"></div>
+          <div class="pt-3 border-t border-stone-800 space-y-2">
+            <div class="flex justify-between items-center"><span class="text-stone-300 font-semibold">AI接続・中継設定</span><span class="text-[10px] text-emerald-400 bg-emerald-950/70 border border-emerald-800 px-1.5 py-0.5 rounded">中継URL設定済</span></div>
+            <div class="space-y-1"><label class="text-[10px] text-stone-400">中継サーバーURL (Cloudflare Worker)</label><input type="text" id="customProxyUrlInput" class="w-full bg-stone-950 border border-stone-700 rounded px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"></div>
+            <div class="space-y-1"><label class="text-[10px] text-stone-400">合言葉 / パスコード (設定した場合のみ)</label><input type="password" id="customPasscodeInput" class="w-full bg-stone-950 border border-stone-700 rounded px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-amber-500"></div>
+            <div class="space-y-1 pt-1"><label class="text-[10px] text-stone-400">個人用APIキー (直接接続する場合)</label><input type="password" id="customApiKeyInput" class="w-full bg-stone-950 border border-stone-700 rounded px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"></div>
+            <div class="flex space-x-2 pt-1">
+              <button id="saveApiKeyBtn" class="flex-1 py-1.5 rounded bg-amber-800 hover:bg-amber-700 text-stone-100 text-xs font-semibold transition-all">設定を保存</button>
+              <button id="resetApiKeyBtn" class="py-1.5 px-2 rounded bg-stone-800 hover:bg-stone-700 text-stone-400 text-xs transition-all">初期化</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const HYAKUNIN_ISSHU = [
+      { id: 0, no: '序', kami: '難波津に 咲くやこの花', shimo: '冬ごもり 今を春べと 咲くやこの花', author: '王仁', kimari: '難波津', type: '序歌', summary: '厳しい冬を耐えて満開に咲く梅の花を讃え、春の訪れを寿ぐ伝統の序歌。', translation: '難波津の入り江に、見事に梅の花が咲いたよ。冬ごもりを経て、今を春だと告げるように花が咲き誇っている。', tips: '「な」の初声は柔らかくかつ芯を持たせ、徐々に息を広げて会場の空気を鎮めます。', joke: '「冬ごもりから覚めたぞ！この調子で100首、喉を温めてまいるのじゃ！」' },
+      { id: 1, no: 1, kami: '秋の田の かりほの庵の 苫をあらみ', shimo: 'わが衣手は 露にぬれつつ', author: '天智天皇', kimari: 'あきの', type: '三字', summary: '粗末な小屋で稲刈りをする農民の苦労に思いを馳せ、民への深い慈愛を詠んだ歌。', translation: '秋の田んぼの仮小屋の屋根の茅の目が粗いので、私の着物の袖は夜露に濡れ続けている。', tips: '「あ」の初声を太く堂々と立ち上げ、天皇の慈悲深い眼差しを表現します。', joke: '「余の袖の濡れ具合に気を取られず、しっかり決まり字を飛ばしてくれよ！」' },
+      { id: 2, no: 2, kami: '春すぎて 夏来にけらし 白妙の', shimo: '衣ほすてふ 天の香具山', author: '持統天皇', kimari: 'はるす', type: '三字', summary: '新緑の香具山に白い衣がひるがえる、初夏の清々しい風情を瑞々しく描いた名歌。', translation: 'いつの間にか春が過ぎ去り、初夏がやって来たらしい。白い衣が干されているという天の香具山に。', tips: '「は」から「る」への移行を涼やかに流し、清涼感のある響きを保ちます。', joke: '「白妙の衣も乾くほど、よい発声であったぞ！」' },
+      { id: 3, no: 3, kami: 'あしびきの 山鳥の尾の しだり尾の', shimo: 'ながながし夜を ひとりかも寝む', author: '柿本人麻呂', kimari: 'あし', type: '二字', summary: '山鳥の長く垂れた尾に寄せて、独り寂しく過ごす秋の夜の切なさを歌う。', translation: '山鳥の長く垂れた尾のように、果てしなく長い秋の夜を、私は独り寂しく寝るのであろうか。', tips: '「な」の連続する響きを重く引き延ばさず、澄んだ哀感を漂わせます。', joke: '「独り寝の夜は寂しいが、お主の読唱の余韻は心地よいのう。」' },
+      { id: 4, no: 4, kami: '田子の浦に うち出でてみれば 白妙の', shimo: '富士の高嶺に 雪は降りつつ', author: '山部赤人', kimari: 'たご', type: '二字', summary: '富士の雄大な白雪の景色を仰ぎ見る、万葉集屈指の雄大な景勝歌。', translation: '田子の浦の海岸に出て仰ぎ見ると、真っ白な富士の高い峰に雪が降り続いている。', tips: '「ふ」の頭声をしっかり前へ飛ばし、霊峰富士の高さを印象づけます。', joke: '「富士の嶺まで通るような朗々たる声じゃった！」' },
+      { id: 5, no: 5, kami: '奥山に 紅葉踏みわけ 鳴く鹿の', shimo: '声きく時ぞ 秋は悲しき', author: '猿丸大夫', kimari: 'おく', type: '二字', summary: '紅葉の奥山で妻を恋いて鳴く鹿の声に、秋の深まりと深い孤独を重ねた一首。', translation: '奥山で散り敷く紅葉を踏み分けながら鳴いている鹿の声を聞く時こそ、秋の寂しさが身にしみる。', tips: '「お」の深い母音をしっかり響かせ、深山幽谷の静けさを醸し出します。', joke: '「鹿も聞き惚れて鳴き止みそうな哀切の調べじゃな。」' },
+      { id: 11, no: 11, kami: 'わたの原 八十島かけて 漕ぎ出でぬと', shimo: '人には告げよ あまの釣舟', author: '参議篁', kimari: 'わたのはら や', type: '大山札', summary: '隠岐へ流される小野篁が、都の愛する人へ伝言を託す舟出の歌。', translation: '大海原の島々を目指して漕ぎ出して行ったと、都の愛しい人に伝えておくれ。', tips: '「わ」の母音に波立つ海の広がりを乗せ、毅然とした響きを保ちます。', joke: '「荒波も静まり返るような凛々しき声であった！」' },
+      { id: 15, no: 15, kami: '君がため 春の野に出でて 若菜つむ', shimo: 'わが衣手に 雪は降りつつ', author: '光孝天皇', kimari: 'きみがため は', type: '大山札', summary: '愛する人の健康を祈り春の野で若菜を摘む真心と、袖に舞い散る清冽な雪の情景。', translation: 'あなたに差し上げるため、春の野に出て若菜を摘む私の袖に、雪がしきりに降りかかっています。', tips: '「き」の初声を澄み切ったトーンで当て、雪の静けさを伝えます。', joke: '「若菜の瑞々しさのように清らかな発声であったぞ！」' },
+      { id: 17, no: 17, kami: 'ちはやぶる 神代もきかず 竜田川', shimo: 'からくれなゐに 水くくるとは', author: '在原業平朝臣', kimari: 'ちは', type: '二字', summary: '鮮やかに紅葉が流れる竜田川の美しさを、神代の奇跡をも凌駕する壮麗さで讃える。', translation: '神々の時代にも聞いたことがありません。竜田川の水面が鮮やかな深紅色に絞り染められているとは。', tips: '「ち」の鋭いアタックから「は」の広がりへ。王朝随一の華やぎを余韻に残します。', joke: '「神代にも聞かぬほどの見事な節回し！竜田川の紅葉が目に浮かぶわ！」' },
+      { id: 57, no: 57, kami: 'めぐりあひて 見しやそれとも わかぬまに', shimo: '雲がくれにし 夜半の月かな', author: '紫式部', kimari: 'め', type: '一字', summary: '偶然再会した幼馴染の友が慌ただしく立ち去った寂しさを、雲隠れする月に託した歌。', translation: 'せっかく巡り逢えたのに、雲の中に隠れてしまった夜半の月のように慌ただしく帰ってしまわれた。', tips: '一字決まりの「め」。第一音の母音を濁さず、針の穴を通すように正確に発声します。', joke: '「一瞬の月のように見事な一音！選手たちの手が宙を舞うたぞ！」' },
+      { id: 70, no: 70, kami: 'さびしさに 宿を立ち出でて ながむれば', shimo: 'いづこも同じ 秋の夕ぐれ', author: '良暹法師', kimari: 'さ', type: '一字', summary: '寂しさに耐えかねて庵を出たものの、どこもかしこも同じ秋の寂寥に包まれている絶望美。', translation: '寂しさに耐えかねて草庵の外に出てみたが、どこも同じように寂しい秋の夕暮れであった。', tips: '一字決まり「さ」。「す」と混同させない澄んだ無声音の立ち上がりを極めます。', joke: '「秋の夕暮れの寂しさが、余韻とともに心に染み渡ったぞ。」' },
+      { id: 77, no: 77, kami: '瀬をはやみ 岩にせかるる 滝川の', shimo: 'われても末に あはむとぞ思ふ', author: '崇徳院', kimari: 'せ', type: '一字', summary: '激流が岩に砕かれて二つに分かれてもやがて合流するように、運命の再会を誓う。', translation: '急流が岩にせき止められて二つに分かれても再び一つになるように、私たちもいつか必ず再会しましょう。', tips: '一字決まり「せ」。激流の迸りと運命を貫く激情を、気迫を込めて押し出します。', joke: '「岩をも砕く鋭き初声！この崇徳院の想い、しかと受け止めたぞ。」' },
+      { id: 87, no: 87, kami: '村雨の 露もまだひぬ まきの葉に', shimo: '霧たちのぼる 秋の夕ぐれ', author: '寂蓮法師', kimari: 'む', type: '一字', summary: '通り雨の雫が残る槇の葉から夕霧が立ち上る、静謐な幽玄の世界を水墨画のように描く。', translation: 'にわか雨の露もまだ乾ききっていない槇の葉に、霧が立ち上っていく物寂しい秋の夕暮れである。', tips: '一字決まり「む」。鼻腔共鳴を活かし、静寂から立ち上げます。', joke: '「静寂の中にフッと立ち上がる完璧な『む』！息を呑んだぞ。」' }
+    ];
+
+    // 全100首プレースホルダー補完
+    for (let i = 1; i <= 100; i++) {
+      if (!HYAKUNIN_ISSHU.find(p => p.no === i)) {
+        let t = '通常';
+        if ([14, 16, 18, 22].includes(i)) t = '二字';
+        HYAKUNIN_ISSHU.push({
+          id: i, no: i, kami: `第${i}首の上の句`, shimo: `第${i}首の下の句`, author: `歌人 ${i}`,
+          kimari: `${i}首`, type: t, summary: `第${i}首の解説。一定のテンポで稽古しましょう。`,
+          translation: `第${i}首の現代語訳。`, tips: `初声をクリアに立ち上げます。`,
+          joke: '「良き発声！この調子で稽古を重ねられよ。」'
+        });
+      }
+    }
+    HYAKUNIN_ISSHU.sort((a, b) => (a.no === '序' ? -1 : (b.no === '序' ? 1 : a.no - b.no)));
+
+    let currentCardIndex = 0, practiceSequence = [...Array(HYAKUNIN_ISSHU.length).keys()], sequenceCursor = 0;
+    let targetTimes = { kami: 5.5, yoin: 1.5, maai: 1.0, shimo: 5.0 };
+    let currentPhase = 'idle', phaseStartTime = 0, timerAnimFrame = null;
+    let audioCtx = null, micStream = null, mediaRecorder = null, recordedChunks = [], lastAudioBlob = null, analyserNode = null, animVolumeFrame = null, isRecording = false;
+
+    let currentFilterType = 'all';
+    let currentSearchKeyword = '';
+
+    let customApiKey = localStorage.getItem('karuta_gemini_api_key') || "";
+    let customProxyUrl = localStorage.getItem('karuta_proxy_url') || "https://karuta-relay.kohayakawakohaya.workers.dev";
+    let customPasscode = localStorage.getItem('karuta_passcode') || "";
+
+    const mainActionBtn = document.getElementById('mainActionBtn'), mainActionBtnText = document.getElementById('mainActionBtnText');
+    const resetPoemBtn = document.getElementById('resetPoemBtn'), nextCardBtn = document.getElementById('nextCardBtn');
+    const phaseLabel = document.getElementById('phaseLabel'), phaseTimerText = document.getElementById('phaseTimerText'), phaseTargetSub = document.getElementById('phaseTargetSub');
+    const progressCircle = document.getElementById('progressCircle'), volumeBar = document.getElementById('volumeBar'), totalTimeElapsed = document.getElementById('totalTimeElapsed');
+    const micRecordDot = document.getElementById('micRecordDot'), micStatusText = document.getElementById('micStatusText');
+    const reviewPanel = document.getElementById('reviewPanel'), recordedDurationText = document.getElementById('recordedDurationText');
+    const playMyAudioBtn = document.getElementById('playMyAudioBtn'), requestAiFeedbackBtn = document.getElementById('requestAiFeedbackBtn');
+    const openAiGuideBtn = document.getElementById('openAiGuideBtn'), poetSpeechBubble = document.getElementById('poetSpeechBubble');
+    const bubblePoetName = document.getElementById('bubblePoetName'), bubblePoetComment = document.getElementById('bubblePoetComment');
+    const rakkanStampContainer = document.getElementById('rakkanStampContainer'), rakkanStamp = document.getElementById('rakkanStamp');
+    const toggleTipsDetailBtn = document.getElementById('toggleTipsDetailBtn'), poemDetailSection = document.getElementById('poemDetailSection');
+    const poemBadge = document.getElementById('poemBadge'), kimarijiBadge = document.getElementById('kimarijiBadge'), cardAuthor = document.getElementById('cardAuthor'), kamiText = document.getElementById('kamiText'), shimoText = document.getElementById('shimoText'), poemMiniSummary = document.getElementById('poemMiniSummary'), poemTranslation = document.getElementById('poemTranslation'), poemReadingTip = document.getElementById('poemReadingTip'), shuffledCountText = document.getElementById('shuffledCountText');
+
+    function displayCard(card) {
+      poemBadge.textContent = card.no === '序' ? '序歌' : `第${card.no}首`;
+      kimarijiBadge.textContent = card.kimari; cardAuthor.textContent = card.author; kamiText.textContent = card.kami; shimoText.textContent = card.shimo;
+      poemMiniSummary.textContent = card.summary; poemTranslation.textContent = card.translation; poemReadingTip.textContent = card.tips;
+      shuffledCountText.textContent = `${sequenceCursor + 1} / ${HYAKUNIN_ISSHU.length}首`;
+      rakkanStampContainer.classList.add('hidden'); poetSpeechBubble.classList.add('hidden');
+    }
+
+    function selectCardByIndex(idx) {
+      currentCardIndex = idx; sequenceCursor = practiceSequence.indexOf(idx); if (sequenceCursor === -1) sequenceCursor = 0;
+      resetReaderState(); displayCard(HYAKUNIN_ISSHU[currentCardIndex]);
+    }
+
+    const TOTAL_CIRCUMFERENCE = 289;
+    function resetReaderState() {
+      cancelAnimationFrame(timerAnimFrame); currentPhase = 'idle'; stopRecording();
+      phaseLabel.textContent = '待機中'; phaseLabel.className = 'text-xs font-bold tracking-widest text-stone-400';
+      phaseTimerText.textContent = targetTimes.kami.toFixed(1); phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
+      totalTimeElapsed.textContent = '0.0s'; progressCircle.style.strokeDashoffset = 0; progressCircle.setAttribute('stroke', '#3b82f6');
+      mainActionBtn.className = 'w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-blue-600 active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
+      mainActionBtn.innerHTML = `<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>読唱開始</span>`;
+      micRecordDot.className = 'w-2 h-2 rounded-full bg-stone-600'; micStatusText.textContent = '待機';
+    }
+
+    function startPractice() {
+      if (currentPhase === 'idle' || currentPhase === 'finished') { startRecording(); startPhase('kami'); } else { pausePractice(); }
+    }
+
+    function pausePractice() {
+      cancelAnimationFrame(timerAnimFrame); currentPhase = 'idle'; stopRecording();
+      mainActionBtnText.textContent = '再開する'; phaseLabel.textContent = '一時停止'; phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400';
+    }
+
+    function startPhase(phase) {
+      currentPhase = phase; phaseStartTime = performance.now();
+      if (phase === 'kami') { phaseLabel.textContent = '上の句 (助走〜本歌)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-blue-400'; phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`; progressCircle.setAttribute('stroke', '#3b82f6'); mainActionBtn.innerHTML = `<span>⏸</span><span>一時停止</span>`; }
+      else if (phase === 'yoin') { phaseLabel.textContent = '余韻 (フェードアウト)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-emerald-400'; phaseTargetSub.textContent = `目標 ${targetTimes.yoin.toFixed(1)}s`; progressCircle.setAttribute('stroke', '#10b981'); }
+      else if (phase === 'maai') { phaseLabel.textContent = '間合い・空時間 (静寂)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400'; phaseTargetSub.textContent = `規定 1.0s`; progressCircle.setAttribute('stroke', '#eab308'); }
+      else if (phase === 'shimo') { phaseLabel.textContent = '下の句 (本歌)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-red-400'; phaseTargetSub.textContent = `目標 ${targetTimes.shimo.toFixed(1)}s`; progressCircle.setAttribute('stroke', '#ef4444'); }
+      tickTimer();
+    }
+
+    function tickTimer() {
+      const elapsed = (performance.now() - phaseStartTime) / 1000;
+      let targetDuration = targetTimes[currentPhase];
+      phaseTimerText.textContent = Math.max(0, targetDuration - elapsed).toFixed(1);
+      progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE * (1 - Math.min(1, elapsed / targetDuration));
+      if (elapsed >= targetDuration) {
+        if (currentPhase === 'kami') startPhase('yoin');
+        else if (currentPhase === 'yoin') startPhase('maai');
+        else if (currentPhase === 'maai') startPhase('shimo');
+        else if (currentPhase === 'shimo') finishPoemReading();
+        return;
+      }
+      timerAnimFrame = requestAnimationFrame(tickTimer);
+    }
+
+    function finishPoemReading() {
+      currentPhase = 'finished'; stopRecording();
+      phaseLabel.textContent = '読了 (お疲れ様でした)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-300';
+      phaseTimerText.textContent = '0.0'; progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE;
+      mainActionBtn.className = 'w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-emerald-700 active:bg-emerald-800 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
+      mainActionBtn.innerHTML = `<span>次へ進む ➔</span>`;
+      const rand = Math.random(); rakkanStamp.textContent = rand > 0.6 ? '神読' : (rand > 0.3 ? '達人' : '風流');
+      rakkanStampContainer.classList.remove('hidden'); bubblePoetName.textContent = HYAKUNIN_ISSHU[currentCardIndex].author; bubblePoetComment.textContent = HYAKUNIN_ISSHU[currentCardIndex].joke; poetSpeechBubble.classList.remove('hidden');
+    }
+
+    async function startRecording() {
+      recordedChunks = [];
+      try {
+        if (!micStream) micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        const source = audioCtx.createMediaStreamSource(micStream);
+        analyserNode = audioCtx.createAnalyser(); analyserNode.fftSize = 256;
+        source.connect(analyserNode); monitorVolume();
+        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
+        mediaRecorder = new MediaRecorder(micStream, { mimeType: mime });
+        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        mediaRecorder.onstop = () => {
+          lastAudioBlob = new Blob(recordedChunks, { type: mime });
+          reviewPanel.classList.remove('hidden');
+          recordedDurationText.textContent = `${(targetTimes.kami + targetTimes.yoin + targetTimes.maai + targetTimes.shimo).toFixed(1)}s`;
+        };
+        mediaRecorder.start(); isRecording = true;
+        micRecordDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-ping'; micStatusText.textContent = '録音中';
+      } catch (err) { micStatusText.textContent = 'マイク無'; }
+    }
+
+    function stopRecording() {
+      if (mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+      isRecording = false; cancelAnimationFrame(animVolumeFrame); volumeBar.style.width = '0%';
+      micRecordDot.className = 'w-2 h-2 rounded-full bg-stone-600'; micStatusText.textContent = '待機';
+    }
+
+    function monitorVolume() {
+      if (!analyserNode) return;
+      const dataArray = new Uint8Array(analyserNode.frequencyBinCount);
+      const checkVol = () => {
+        analyserNode.getByteFrequencyData(dataArray);
+        let sum = 0; for (let i = 0; i < dataArray.length; i++) sum += dataArray[i];
+        volumeBar.style.width = `${Math.min(100, Math.round((sum / dataArray.length / 128) * 100))}%`;
+        if (isRecording) totalTimeElapsed.textContent = `${((performance.now() - phaseStartTime) / 1000).toFixed(1)}s`;
+        animVolumeFrame = requestAnimationFrame(checkVol);
+      };
+      checkVol();
+    }
+
+    async function callGeminiApi({ model, payload }) {
+      const proxy = customProxyUrl.trim(), apiKey = customApiKey.trim();
+      if (proxy) {
+        const headers = { "Content-Type": "application/json" };
+        if (customPasscode.trim()) headers["X-Passcode"] = customPasscode.trim();
+        const res = await fetch(proxy, { method: "POST", headers, body: JSON.stringify({ model, contents: payload.contents, generationConfig: payload.generationConfig }) });
+        if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `中継エラー (${res.status})`); }
+        return await res.json();
+      }
+      if (apiKey) {
+        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
+        if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error?.message || `APIエラー (${res.status})`); }
+        return await res.json();
+      }
+      throw new Error('設定画面で中継サーバーURLまたはAPIキーを設定してください。');
+    }
+
+    async function reviewAudioWithAi() {
+      if (!lastAudioBlob) return alert('録音された音声がありません。まず読唱を行ってください。');
+      const card = HYAKUNIN_ISSHU[currentCardIndex], modal = document.getElementById('aiModal');
+      document.getElementById('aiModalTitle').textContent = '🥋 読手専任師範の音声添削';
+      document.getElementById('aiModalContent').innerHTML = `<div class="flex flex-col items-center py-8 space-y-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div><span class="text-stone-300 text-sm">録音音声を師範が拝聴中...</span></div>`;
+      modal.classList.remove('hidden');
+      try {
+        const reader = new FileReader(); reader.readAsDataURL(lastAudioBlob);
+        reader.onloadend = async () => {
+          const payload = {
+            contents: [{
+              parts: [
+                { inlineData: { mimeType: lastAudioBlob.type || 'audio/webm', data: reader.result.split(',')[1] } },
+                { text: `あなたは全日本かるた協会のA級公認読手・専任読手の指導員です。
+ユーザーが練習で読唱した添付の音声ファイルを厳正に聴いて講評してください。
+
+お題：${card.no}番 【${card.kami} / ${card.shimo}】（決まり字：${card.kimari}）
+
+【最重要判定ルール】
+・もし音声が無音、息の音や生活ノイズのみ、または歌を朗詠していない場合は、絶対に褒めたり高得点をつけたりせず、「声が確認できませんでした。マイクに向かって声を出して詠んでください。」と厳格に伝えてください（得点は0点〜10点）。
+・実際に声を出して歌を詠んでいる場合のみ、以下の形式でわかりやすく改行してアドバイスしてください：
+
+■ 初声と決まり字の通り具合：
+（選手が払う一音目がクリアに立っているか）
+
+■ テンポ・間合いの正確さ：
+（上下の句の長さ、1.0秒の静寂が保てているか）
+
+■ 余韻と響き：
+（息の抜け方、美しくフェードアウトできているか）
+
+■ 師範の総合評価：【◯◯点 / 100点】
+（一言激励のメッセージ）` }
+              ]
+            }]
+          };
+          const res = await callGeminiApi({ model: "gemini-3-flash-preview", payload });
+          const text = res.candidates?.[0]?.content?.parts?.[0]?.text || "講評の取得に失敗しました。";
+          document.getElementById('aiModalContent').innerHTML = `
+            <div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed space-y-3">
+              ${text}
+            </div>
+          `;
+        };
+      } catch (err) {
+        document.getElementById('aiModalContent').innerHTML = `<div class="text-red-400 p-4 bg-red-950/50 rounded-lg border border-red-800 text-sm">添削エラー: ${err.message}</div>`;
+      }
+    }
+
+    async function showAiPoemGuide() {
+      const card = HYAKUNIN_ISSHU[currentCardIndex], modal = document.getElementById('aiModal');
+      document.getElementById('aiModalTitle').textContent = `✨ 第${card.no}首 読唱指南`;
+      document.getElementById('aiModalContent').innerHTML = `<div class="flex flex-col items-center py-8 space-y-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div><span class="text-stone-300 text-sm">指南を生成中...</span></div>`;
+      modal.classList.remove('hidden');
+      try {
+        const payload = { contents: [{ parts: [{ text: `第${card.no}首【${card.kami} / ${card.shimo}】の歌枕・情景と、読手向けの発声ポイント（初声の当て方・余韻の引き方）を分かりやすく解説してください。` }] }] };
+        const res = await callGeminiApi({ model: "gemini-3-flash-preview", payload });
+        document.getElementById('aiModalContent').innerHTML = `<div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed">${res.candidates?.[0]?.content?.parts?.[0]?.text || "指南取得失敗"}</div>`;
+      } catch (err) { document.getElementById('aiModalContent').innerHTML = `<div class="text-red-400 p-4 bg-red-950/50 rounded border border-red-800 text-sm">エラー: ${err.message}</div>`; }
+    }
+
+    // 歌選択モーダル & 検索・フィルタ（修正版）
+    function renderCardPickerList() {
+      const container = document.getElementById('cardListContainer');
+      container.innerHTML = '';
+
+      const filtered = HYAKUNIN_ISSHU.filter(card => {
+        if (currentFilterType === 'ichiji') {
+          return ['む', 'す', 'め', 'ふ', 'さ', 'ほ', 'せ'].includes(card.kimari);
+        } else if (currentFilterType === 'niji') {
+          return card.type === '二字';
+        } else if (currentFilterType === 'ooyama') {
+          return card.type === '大山札';
+        }
+        return true;
+      }).filter(card => {
+        if (!currentSearchKeyword) return true;
+        const kw = currentSearchKeyword.toLowerCase().trim();
+        return (
+          card.no.toString().toLowerCase().includes(kw) ||
+          card.kami.toLowerCase().includes(kw) ||
+          card.shimo.toLowerCase().includes(kw) ||
+          card.author.toLowerCase().includes(kw) ||
+          card.kimari.toLowerCase().includes(kw)
+        );
+      });
+
+      document.getElementById('filteredCountText').textContent = `${HYAKUNIN_ISSHU.length}首中 ${filtered.length}首 表示`;
+
+      if (filtered.length === 0) {
+        container.innerHTML = '<div class="text-center py-8 text-stone-500 text-xs">該当する歌が見つかりませんでした</div>';
+        return;
+      }
+
+      filtered.forEach(c => {
+        const item = document.createElement('div');
+        item.className = `p-2.5 rounded-lg flex items-center justify-between hover:bg-stone-800 cursor-pointer transition-colors ${c.id === currentCardIndex ? 'bg-stone-800 border-l-4 border-amber-500' : ''}`;
+        item.innerHTML = `
+          <div class="flex items-center space-x-2.5">
+            <span class="w-7 text-center font-mincho font-bold text-xs ${c.no === '序' ? 'text-amber-400' : 'text-stone-400'}">${c.no}</span>
+            <div>
+              <div class="text-xs sm:text-sm font-mincho text-stone-200">${c.kami}</div>
+              <div class="text-[10px] text-stone-400 mt-0.5">
+                <span>${c.author}</span>
+                <span class="text-amber-300 ml-1.5 font-bold">決: ${c.kimari}</span>
+              </div>
+            </div>
+          </div>
+          <button class="text-xs px-2.5 py-1 rounded bg-stone-700 text-stone-200 active:scale-95">選ぶ</button>
+        `;
+        item.addEventListener('click', () => {
+          selectCardByIndex(c.id);
+          document.getElementById('cardSelectModal').classList.add('hidden');
+        });
+        container.appendChild(item);
+      });
+    }
+
+    mainActionBtn.addEventListener('click', () => {
+      if (currentPhase === 'finished') { sequenceCursor = (sequenceCursor + 1) % practiceSequence.length; selectCardByIndex(practiceSequence[sequenceCursor]); startPractice(); }
+      else { startPractice(); }
+    });
+    resetPoemBtn.addEventListener('click', resetReaderState);
+    nextCardBtn.addEventListener('click', () => { sequenceCursor = (sequenceCursor + 1) % practiceSequence.length; selectCardByIndex(practiceSequence[sequenceCursor]); });
+    playMyAudioBtn.addEventListener('click', () => { if (lastAudioBlob) new Audio(URL.createObjectURL(lastAudioBlob)).play(); });
+    requestAiFeedbackBtn.addEventListener('click', reviewAudioWithAi);
+    openAiGuideBtn.addEventListener('click', showAiPoemGuide);
+
+    toggleTipsDetailBtn.addEventListener('click', () => {
+      const isH = poemDetailSection.classList.contains('hidden');
+      poemDetailSection.classList.toggle('hidden', !isH);
+      toggleTipsDetailBtn.textContent = isH ? '閉じる' : '詳細を開く';
+    });
+
+    // 検索・フィルタリングのイベントリスナー
+    document.getElementById('openCardSelectModalBtn').addEventListener('click', () => {
+      renderCardPickerList();
+      document.getElementById('cardSelectModal').classList.remove('hidden');
+    });
+    document.getElementById('closeCardSelectModalBtn').addEventListener('click', () => document.getElementById('cardSelectModal').classList.add('hidden'));
+
+    document.getElementById('cardSearchInput').addEventListener('input', (e) => {
+      currentSearchKeyword = e.target.value;
+      renderCardPickerList();
+    });
+
+    document.querySelectorAll('.filter-tab-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.filter-tab-btn').forEach(b => {
+          b.className = 'filter-tab-btn px-2.5 py-1 rounded bg-stone-800 text-stone-400 border border-stone-700';
+        });
+        e.target.className = 'filter-tab-btn px-2.5 py-1 rounded bg-amber-900/40 text-amber-300 border border-amber-700/50';
+        currentFilterType = e.target.dataset.filter;
+        renderCardPickerList();
+      });
+    });
+
+    document.getElementById('shuffleSelectBtn').addEventListener('click', () => {
+      practiceSequence.sort(() => Math.random() - 0.5);
+      sequenceCursor = 0;
+      selectCardByIndex(practiceSequence[0]);
+      document.getElementById('cardSelectModal').classList.add('hidden');
+    });
+
+    document.getElementById('closeAiModalBtn').addEventListener('click', () => document.getElementById('aiModal').classList.add('hidden'));
+    document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      document.getElementById('customProxyUrlInput').value = customProxyUrl;
+      document.getElementById('customPasscodeInput').value = customPasscode;
+      document.getElementById('customApiKeyInput').value = customApiKey;
+      settingsModal.classList.remove('hidden');
+    });
+    document.getElementById('closeSettingsBtn').addEventListener('click', () => document.getElementById('settingsModal').classList.add('hidden'));
+
+    document.getElementById('saveApiKeyBtn').addEventListener('click', () => {
+      customProxyUrl = document.getElementById('customProxyUrlInput').value.trim();
+      customPasscode = document.getElementById('customPasscodeInput').value.trim();
+      customApiKey = document.getElementById('customApiKeyInput').value.trim();
+      localStorage.setItem('karuta_proxy_url', customProxyUrl);
+      localStorage.setItem('karuta_passcode', customPasscode);
+      localStorage.setItem('karuta_gemini_api_key', customApiKey);
+      alert('設定を保存しました');
+      document.getElementById('settingsModal').classList.add('hidden');
+    });
+
+    selectCardByIndex(0);
+  </script>
+</body>
+</html>
