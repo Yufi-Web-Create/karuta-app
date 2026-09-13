@@ -179,7 +179,6 @@
       { id: 87, no: 87, kami: '村雨の 露もまだひぬ まきの葉に', shimo: '霧たちのぼる 秋の夕ぐれ', author: '寂蓮法師', kimari: 'む', type: '一字', summary: '通り雨の雫が残る槇の葉から夕霧が立ち上る、静謐な幽玄の世界を水墨画のように描く。', translation: 'にわか雨の露もまだ乾ききっていない槇の葉に、霧が立ち上っていく物寂しい秋の夕暮れである。', tips: '一字決まり「む」。鼻腔共鳴を活かし、静寂から立ち上げます。', joke: '「静寂の中にフッと立ち上がる完璧な『む』！息を呑んだぞ。」' }
     ];
 
-    // 全100首プレースホルダー補完
     for (let i = 1; i <= 100; i++) {
       if (!HYAKUNIN_ISSHU.find(p => p.no === i)) {
         let t = '通常';
@@ -195,7 +194,12 @@
     HYAKUNIN_ISSHU.sort((a, b) => (a.no === '序' ? -1 : (b.no === '序' ? 1 : a.no - b.no)));
 
     let currentCardIndex = 0, practiceSequence = [...Array(HYAKUNIN_ISSHU.length).keys()], sequenceCursor = 0;
-    let targetTimes = { kami: 5.5, yoin: 1.5, maai: 1.0, shimo: 5.0 };
+
+    // 保存済みの秒数設定があれば読み込み、なければ規定値
+    let savedTimes = null;
+    try { savedTimes = JSON.parse(localStorage.getItem('karuta_target_times')); } catch(e) {}
+    let targetTimes = savedTimes || { kami: 5.5, yoin: 1.5, maai: 1.0, shimo: 5.0 };
+
     let currentPhase = 'idle', phaseStartTime = 0, timerAnimFrame = null;
     let audioCtx = null, micStream = null, mediaRecorder = null, recordedChunks = [], lastAudioBlob = null, analyserNode = null, animVolumeFrame = null, isRecording = false;
 
@@ -234,56 +238,123 @@
 
     const TOTAL_CIRCUMFERENCE = 289;
     function resetReaderState() {
-      cancelAnimationFrame(timerAnimFrame); currentPhase = 'idle'; stopRecording();
-      phaseLabel.textContent = '待機中'; phaseLabel.className = 'text-xs font-bold tracking-widest text-stone-400';
-      phaseTimerText.textContent = targetTimes.kami.toFixed(1); phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
-      totalTimeElapsed.textContent = '0.0s'; progressCircle.style.strokeDashoffset = 0; progressCircle.setAttribute('stroke', '#3b82f6');
+      if (timerAnimFrame) {
+        cancelAnimationFrame(timerAnimFrame);
+        timerAnimFrame = null;
+      }
+      currentPhase = 'idle';
+      stopRecording();
+
+      phaseLabel.textContent = '待機中';
+      phaseLabel.className = 'text-xs font-bold tracking-widest text-stone-400';
+      phaseTimerText.textContent = targetTimes.kami.toFixed(1);
+      phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
+      totalTimeElapsed.textContent = '0.0s';
+      progressCircle.style.strokeDashoffset = 0;
+      progressCircle.setAttribute('stroke', '#3b82f6');
+
       mainActionBtn.className = 'w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-blue-600 active:bg-blue-700 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
       mainActionBtn.innerHTML = `<svg class="w-6 h-6 fill-current" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg><span>読唱開始</span>`;
-      micRecordDot.className = 'w-2 h-2 rounded-full bg-stone-600'; micStatusText.textContent = '待機';
+      micRecordDot.className = 'w-2 h-2 rounded-full bg-stone-600';
+      micStatusText.textContent = '待機';
     }
 
     function startPractice() {
-      if (currentPhase === 'idle' || currentPhase === 'finished') { startRecording(); startPhase('kami'); } else { pausePractice(); }
+      if (currentPhase === 'idle' || currentPhase === 'finished') {
+        startRecording();
+        startPhase('kami');
+      } else {
+        pausePractice();
+      }
     }
 
     function pausePractice() {
-      cancelAnimationFrame(timerAnimFrame); currentPhase = 'idle'; stopRecording();
-      mainActionBtnText.textContent = '再開する'; phaseLabel.textContent = '一時停止'; phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400';
+      if (timerAnimFrame) {
+        cancelAnimationFrame(timerAnimFrame);
+        timerAnimFrame = null;
+      }
+      currentPhase = 'idle';
+      stopRecording();
+
+      mainActionBtnText.textContent = '再開する';
+      phaseLabel.textContent = '一時停止';
+      phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400';
     }
 
     function startPhase(phase) {
-      currentPhase = phase; phaseStartTime = performance.now();
-      if (phase === 'kami') { phaseLabel.textContent = '上の句 (助走〜本歌)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-blue-400'; phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`; progressCircle.setAttribute('stroke', '#3b82f6'); mainActionBtn.innerHTML = `<span>⏸</span><span>一時停止</span>`; }
-      else if (phase === 'yoin') { phaseLabel.textContent = '余韻 (フェードアウト)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-emerald-400'; phaseTargetSub.textContent = `目標 ${targetTimes.yoin.toFixed(1)}s`; progressCircle.setAttribute('stroke', '#10b981'); }
-      else if (phase === 'maai') { phaseLabel.textContent = '間合い・空時間 (静寂)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400'; phaseTargetSub.textContent = `規定 1.0s`; progressCircle.setAttribute('stroke', '#eab308'); }
-      else if (phase === 'shimo') { phaseLabel.textContent = '下の句 (本歌)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-red-400'; phaseTargetSub.textContent = `目標 ${targetTimes.shimo.toFixed(1)}s`; progressCircle.setAttribute('stroke', '#ef4444'); }
+      if (timerAnimFrame) {
+        cancelAnimationFrame(timerAnimFrame);
+        timerAnimFrame = null;
+      }
+      currentPhase = phase;
+      phaseStartTime = performance.now();
+
+      if (phase === 'kami') {
+        phaseLabel.textContent = '上の句 (助走〜本歌)';
+        phaseLabel.className = 'text-xs font-bold tracking-widest text-blue-400';
+        phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#3b82f6');
+        mainActionBtn.innerHTML = `<span>⏸</span><span>一時停止</span>`;
+      } else if (phase === 'yoin') {
+        phaseLabel.textContent = '余韻 (フェードアウト)';
+        phaseLabel.className = 'text-xs font-bold tracking-widest text-emerald-400';
+        phaseTargetSub.textContent = `目標 ${targetTimes.yoin.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#10b981');
+      } else if (phase === 'maai') {
+        phaseLabel.textContent = '間合い・空時間 (静寂)';
+        phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-400';
+        phaseTargetSub.textContent = `規定 ${targetTimes.maai.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#eab308');
+      } else if (phase === 'shimo') {
+        phaseLabel.textContent = '下の句 (本歌)';
+        phaseLabel.className = 'text-xs font-bold tracking-widest text-red-400';
+        phaseTargetSub.textContent = `目標 ${targetTimes.shimo.toFixed(1)}s`;
+        progressCircle.setAttribute('stroke', '#ef4444');
+      }
+
       tickTimer();
     }
 
     function tickTimer() {
-      const elapsed = (performance.now() - phaseStartTime) / 1000;
-      let targetDuration = targetTimes[currentPhase];
-      phaseTimerText.textContent = Math.max(0, targetDuration - elapsed).toFixed(1);
-      progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE * (1 - Math.min(1, elapsed / targetDuration));
+      const now = performance.now();
+      const elapsed = Math.max(0, (now - phaseStartTime) / 1000);
+      const targetDuration = targetTimes[currentPhase];
+
+      const remaining = Math.max(0, targetDuration - elapsed);
+      phaseTimerText.textContent = remaining.toFixed(1);
+
+      const ratio = Math.min(1, elapsed / targetDuration);
+      progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE * (1 - ratio);
+
       if (elapsed >= targetDuration) {
+        timerAnimFrame = null;
         if (currentPhase === 'kami') startPhase('yoin');
         else if (currentPhase === 'yoin') startPhase('maai');
         else if (currentPhase === 'maai') startPhase('shimo');
         else if (currentPhase === 'shimo') finishPoemReading();
         return;
       }
+
       timerAnimFrame = requestAnimationFrame(tickTimer);
     }
 
     function finishPoemReading() {
-      currentPhase = 'finished'; stopRecording();
-      phaseLabel.textContent = '読了 (お疲れ様でした)'; phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-300';
-      phaseTimerText.textContent = '0.0'; progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE;
+      currentPhase = 'finished';
+      stopRecording();
+
+      phaseLabel.textContent = '読了 (お疲れ様でした)';
+      phaseLabel.className = 'text-xs font-bold tracking-widest text-amber-300';
+      phaseTimerText.textContent = '0.0';
+      progressCircle.style.strokeDashoffset = TOTAL_CIRCUMFERENCE;
       mainActionBtn.className = 'w-full py-4 rounded-xl font-bold text-lg tracking-wider text-white shadow-lg bg-emerald-700 active:bg-emerald-800 active:scale-[0.98] transition-all flex items-center justify-center space-x-2';
       mainActionBtn.innerHTML = `<span>次へ進む ➔</span>`;
-      const rand = Math.random(); rakkanStamp.textContent = rand > 0.6 ? '神読' : (rand > 0.3 ? '達人' : '風流');
-      rakkanStampContainer.classList.remove('hidden'); bubblePoetName.textContent = HYAKUNIN_ISSHU[currentCardIndex].author; bubblePoetComment.textContent = HYAKUNIN_ISSHU[currentCardIndex].joke; poetSpeechBubble.classList.remove('hidden');
+
+      const rand = Math.random();
+      rakkanStamp.textContent = rand > 0.6 ? '神読' : (rand > 0.3 ? '達人' : '風流');
+      rakkanStampContainer.classList.remove('hidden');
+      bubblePoetName.textContent = HYAKUNIN_ISSHU[currentCardIndex].author;
+      bubblePoetComment.textContent = HYAKUNIN_ISSHU[currentCardIndex].joke;
+      poetSpeechBubble.classList.remove('hidden');
     }
 
     async function startRecording() {
@@ -301,7 +372,8 @@
         mediaRecorder.onstop = () => {
           lastAudioBlob = new Blob(recordedChunks, { type: mime });
           reviewPanel.classList.remove('hidden');
-          recordedDurationText.textContent = `${(targetTimes.kami + targetTimes.yoin + targetTimes.maai + targetTimes.shimo).toFixed(1)}s`;
+          const totalTarget = targetTimes.kami + targetTimes.yoin + targetTimes.maai + targetTimes.shimo;
+          recordedDurationText.textContent = `${totalTarget.toFixed(1)}s`;
         };
         mediaRecorder.start(); isRecording = true;
         micRecordDot.className = 'w-2 h-2 rounded-full bg-red-500 animate-ping'; micStatusText.textContent = '録音中';
@@ -405,7 +477,6 @@
       } catch (err) { document.getElementById('aiModalContent').innerHTML = `<div class="text-red-400 p-4 bg-red-950/50 rounded border border-red-800 text-sm">エラー: ${err.message}</div>`; }
     }
 
-    // 歌選択モーダル & 検索・フィルタ（修正版）
     function renderCardPickerList() {
       const container = document.getElementById('cardListContainer');
       container.innerHTML = '';
@@ -462,13 +533,65 @@
       });
     }
 
+    // --- 秒数設定スライダーのリアルタイム同期＆保存処理 ---
+    const inputKami = document.getElementById('inputKami'), valKami = document.getElementById('valKami');
+    const inputYoin = document.getElementById('inputYoin'), valYoin = document.getElementById('valYoin');
+    const inputMaai = document.getElementById('inputMaai'), valMaai = document.getElementById('valMaai');
+    const inputShimo = document.getElementById('inputShimo'), valShimo = document.getElementById('valShimo');
+
+    function syncSliderDisplay() {
+      inputKami.value = targetTimes.kami; valKami.textContent = `${targetTimes.kami.toFixed(1)}s`;
+      inputYoin.value = targetTimes.yoin; valYoin.textContent = `${targetTimes.yoin.toFixed(1)}s`;
+      inputMaai.value = targetTimes.maai; valMaai.textContent = `${targetTimes.maai.toFixed(1)}s`;
+      inputShimo.value = targetTimes.shimo; valShimo.textContent = `${targetTimes.shimo.toFixed(1)}s`;
+    }
+
+    function saveAndApplyTimes() {
+      localStorage.setItem('karuta_target_times', JSON.stringify(targetTimes));
+      if (currentPhase === 'idle') {
+        phaseTimerText.textContent = targetTimes.kami.toFixed(1);
+        phaseTargetSub.textContent = `目標 ${targetTimes.kami.toFixed(1)}s`;
+      }
+    }
+
+    inputKami.addEventListener('input', (e) => {
+      targetTimes.kami = parseFloat(e.target.value);
+      valKami.textContent = `${targetTimes.kami.toFixed(1)}s`;
+      saveAndApplyTimes();
+    });
+    inputYoin.addEventListener('input', (e) => {
+      targetTimes.yoin = parseFloat(e.target.value);
+      valYoin.textContent = `${targetTimes.yoin.toFixed(1)}s`;
+      saveAndApplyTimes();
+    });
+    inputMaai.addEventListener('input', (e) => {
+      targetTimes.maai = parseFloat(e.target.value);
+      valMaai.textContent = `${targetTimes.maai.toFixed(1)}s`;
+      saveAndApplyTimes();
+    });
+    inputShimo.addEventListener('input', (e) => {
+      targetTimes.shimo = parseFloat(e.target.value);
+      valShimo.textContent = `${targetTimes.shimo.toFixed(1)}s`;
+      saveAndApplyTimes();
+    });
+
     mainActionBtn.addEventListener('click', () => {
-      if (currentPhase === 'finished') { sequenceCursor = (sequenceCursor + 1) % practiceSequence.length; selectCardByIndex(practiceSequence[sequenceCursor]); startPractice(); }
-      else { startPractice(); }
+      if (currentPhase === 'finished') {
+        sequenceCursor = (sequenceCursor + 1) % practiceSequence.length;
+        selectCardByIndex(practiceSequence[sequenceCursor]);
+        startPractice();
+      } else {
+        startPractice();
+      }
     });
     resetPoemBtn.addEventListener('click', resetReaderState);
-    nextCardBtn.addEventListener('click', () => { sequenceCursor = (sequenceCursor + 1) % practiceSequence.length; selectCardByIndex(practiceSequence[sequenceCursor]); });
-    playMyAudioBtn.addEventListener('click', () => { if (lastAudioBlob) new Audio(URL.createObjectURL(lastAudioBlob)).play(); });
+    nextCardBtn.addEventListener('click', () => {
+      sequenceCursor = (sequenceCursor + 1) % practiceSequence.length;
+      selectCardByIndex(practiceSequence[sequenceCursor]);
+    });
+    playMyAudioBtn.addEventListener('click', () => {
+      if (lastAudioBlob) new Audio(URL.createObjectURL(lastAudioBlob)).play();
+    });
     requestAiFeedbackBtn.addEventListener('click', reviewAudioWithAi);
     openAiGuideBtn.addEventListener('click', showAiPoemGuide);
 
@@ -478,7 +601,6 @@
       toggleTipsDetailBtn.textContent = isH ? '閉じる' : '詳細を開く';
     });
 
-    // 検索・フィルタリングのイベントリスナー
     document.getElementById('openCardSelectModalBtn').addEventListener('click', () => {
       renderCardPickerList();
       document.getElementById('cardSelectModal').classList.remove('hidden');
@@ -510,6 +632,7 @@
 
     document.getElementById('closeAiModalBtn').addEventListener('click', () => document.getElementById('aiModal').classList.add('hidden'));
     document.getElementById('openSettingsBtn').addEventListener('click', () => {
+      syncSliderDisplay();
       document.getElementById('customProxyUrlInput').value = customProxyUrl;
       document.getElementById('customPasscodeInput').value = customPasscode;
       document.getElementById('customApiKeyInput').value = customApiKey;
@@ -528,6 +651,8 @@
       document.getElementById('settingsModal').classList.add('hidden');
     });
 
+    // 初期起動
+    syncSliderDisplay();
     selectCardByIndex(0);
   </script>
 </body>
