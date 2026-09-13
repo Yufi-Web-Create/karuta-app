@@ -30,7 +30,7 @@
     </header>
 
     <main class="flex-1 flex flex-col items-center justify-center my-1.5 relative w-full overflow-hidden">
-      <!-- 腕試しモード用設定バー（選曲タイプ＆首数設定） -->
+      <!-- 腕試しモード用設定バー -->
       <div id="trialSettingsBar" class="w-full max-w-xs p-2 mb-1 text-xs bg-amber-950/40 border border-amber-800/50 rounded space-y-1.5 hidden">
         <div class="flex items-center justify-between">
           <span class="text-amber-300 font-bold">選曲方式:</span>
@@ -61,7 +61,7 @@
         </div>
       </div>
 
-      <!-- 3面短冊コンテナ（左：前歌、中央：本歌、右：次歌） -->
+      <!-- 3面短冊コンテナ -->
       <div class="w-full max-w-md flex items-stretch justify-center gap-1.5 px-1 py-1">
         <div class="w-16 bg-[#efe6d8] text-stone-600 rounded p-1.5 border border-stone-400/80 flex flex-col justify-between opacity-50 shrink-0 select-none">
           <div class="text-[9px] font-bold text-stone-500 border-b border-stone-300 pb-0.5">◀ 前歌</div>
@@ -700,22 +700,29 @@
     function startRecording() {
       recordedChunks = [];
       try {
-        const mime = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4';
-        mediaRecorder = new MediaRecorder(micStream, { mimeType: mime });
-        mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) recordedChunks.push(e.data); };
+        let mime = 'audio/webm';
+        if (!MediaRecorder.isTypeSupported('audio/webm')) {
+          if (MediaRecorder.isTypeSupported('audio/mp4')) mime = 'audio/mp4';
+          else if (MediaRecorder.isTypeSupported('audio/aac')) mime = 'audio/aac';
+          else mime = '';
+        }
+        const options = mime ? { mimeType: mime } : {};
+        mediaRecorder = new MediaRecorder(micStream, options);
+        mediaRecorder.ondataavailable = (e) => { if (e.data && e.data.size > 0) recordedChunks.push(e.data); };
         mediaRecorder.onstop = () => {
-          lastAudioBlob = new Blob(recordedChunks, { type: mime });
+          const finalMime = mediaRecorder.mimeType || mime || 'audio/webm';
+          lastAudioBlob = new Blob(recordedChunks, { type: finalMime });
           reviewPanel.classList.remove('hidden');
           const recordedSec = ((performance.now() - recordingStartTime) / 1000).toFixed(1);
           const totalQ = appMode === 'trial' ? trialQueue.length : 1;
           recordedDurationText.textContent = `${recordedSec}s (${appMode === 'trial' ? `${trialCurrentIndex + 1}/${totalQ}首通し` : '実測'})`;
         };
         recordingStartTime = performance.now();
-        mediaRecorder.start();
+        mediaRecorder.start(1000);
         isRecording = true;
         updateMicStatusUi();
       } catch (err) {
-        console.error(err);
+        console.error('録音開始エラー:', err);
       }
     }
 
@@ -743,19 +750,48 @@
 
     async function callGeminiApi({ model, payload }) {
       const proxy = customProxyUrl.trim(), apiKey = customApiKey.trim();
-      if (proxy) {
-        const headers = { "Content-Type": "application/json" };
-        if (customPasscode.trim()) headers["X-Passcode"] = customPasscode.trim();
-        const res = await fetch(proxy, { method: "POST", headers, body: JSON.stringify({ model, contents: payload.contents, generationConfig: payload.generationConfig }) });
-        if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error || `中継エラー (${res.status})`); }
-        return await res.json();
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 45000);
+
+      try {
+        if (proxy) {
+          const headers = { "Content-Type": "application/json" };
+          if (customPasscode.trim()) headers["X-Passcode"] = customPasscode.trim();
+          const res = await fetch(proxy, {
+            method: "POST",
+            headers,
+            body: JSON.stringify({ model, contents: payload.contents, generationConfig: payload.generationConfig }),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error || `中継サーバーエラー (HTTP ${res.status})`);
+          }
+          return await res.json();
+        }
+        if (apiKey) {
+          const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          if (!res.ok) {
+            const errData = await res.json().catch(() => ({}));
+            throw new Error(errData.error?.message || `Gemini APIエラー (HTTP ${res.status})`);
+          }
+          return await res.json();
+        }
+        throw new Error('設定画面で中継サーバーURLまたはAPIキーを設定してください。');
+      } catch (err) {
+        clearTimeout(timeoutId);
+        if (err.name === 'AbortError') {
+          throw new Error('通信がタイムアウトしました (45秒)。通信状況をご確認ください。');
+        }
+        throw err;
       }
-      if (apiKey) {
-        const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(payload) });
-        if (!res.ok) { const errData = await res.json().catch(() => ({})); throw new Error(errData.error?.message || `APIエラー (${res.status})`); }
-        return await res.json();
-      }
-      throw new Error('設定画面で中継サーバーURLまたはAPIキーを設定してください。');
     }
 
     async function reviewAudioWithAi() {
@@ -764,16 +800,37 @@
       const modal = document.getElementById('aiModal');
       const totalQ = appMode === 'trial' ? trialQueue.length : 1;
       document.getElementById('aiModalTitle').textContent = appMode === 'trial' ? `🥋 腕試しモード通し添削 (${totalQ}首)` : '🥋 読手専任師範の音声添削';
-      document.getElementById('aiModalContent').innerHTML = `<div class="flex flex-col items-center py-8 space-y-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div><span class="text-stone-300 text-sm">一連の読唱音声を師範が拝聴中...</span></div>`;
+      document.getElementById('aiModalContent').innerHTML = `
+        <div class="flex flex-col items-center py-8 space-y-3">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+          <span class="text-stone-300 text-sm font-bold">録音音声を師範が拝聴・解析中...</span>
+          <span class="text-stone-500 text-xs">（音声解析のため15〜30秒ほどかかります）</span>
+        </div>
+      `;
       modal.classList.remove('hidden');
+
       try {
-        const reader = new FileReader(); reader.readAsDataURL(lastAudioBlob);
-        reader.onloadend = async () => {
-          const payload = {
-            contents: [{
-              parts: [
-                { inlineData: { mimeType: lastAudioBlob.type || 'audio/webm', data: reader.result.split(',')[1] } },
-                { text: `あなたは全日本かるた協会のA級公認読手・専任読手の筆頭指導員です。
+        const base64Data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const res = reader.result;
+            if (typeof res === 'string') {
+              resolve(res.split(',')[1]);
+            } else {
+              reject(new Error('音声データの変換に失敗しました'));
+            }
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(lastAudioBlob);
+        });
+
+        const audioMime = lastAudioBlob.type || 'audio/webm';
+
+        const payload = {
+          contents: [{
+            parts: [
+              { inlineData: { mimeType: audioMime, data: base64Data } },
+              { text: `あなたは全日本かるた協会のA級公認読手・専任読手の筆頭指導員です。
 ユーザーが【${appMode === 'trial' ? `腕試し試合モード（${totalQ}首連続朗詠）` : '通常稽古'}】として録音した音声を厳正に講評してください。
 
 【直近の本歌情報】
@@ -788,32 +845,71 @@
 ■ 余韻と響きの美しさ：
 ■ 師範の総合評価：【◯◯点 / 100点】
 （実戦読手としての激励・アドバイス）` }
-              ]
-            }]
-          };
-          const res = await callGeminiApi({ model: "gemini-3-flash-preview", payload });
-          const text = res.candidates?.[0]?.content?.parts?.[0]?.text || "講評の取得に失敗しました。";
-          document.getElementById('aiModalContent').innerHTML = `
-            <div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed space-y-3">
-              ${text}
-            </div>
-          `;
+            ]
+          }]
         };
+
+        const res = await callGeminiApi({ model: "gemini-2.5-flash", payload });
+        const text = res.candidates?.[0]?.content?.parts?.[0]?.text || "講評の取得に失敗しました。";
+        document.getElementById('aiModalContent').innerHTML = `
+          <div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed space-y-3">
+            ${text}
+          </div>
+        `;
       } catch (err) {
-        document.getElementById('aiModalContent').innerHTML = `<div class="text-red-400 p-4 bg-red-950/50 rounded-lg border border-red-800 text-sm">添削エラー: ${err.message}</div>`;
+        document.getElementById('aiModalContent').innerHTML = `
+          <div class="text-red-300 p-4 bg-red-950/60 rounded-xl border border-red-800 space-y-2 text-xs sm:text-sm">
+            <div class="font-bold text-red-200 text-sm sm:text-base">⚠️ 添削エラーが発生しました</div>
+            <div>${err.message}</div>
+            <div class="text-stone-400 text-[11px] pt-1 border-t border-red-900/60">※ Cloudflare Workerの中継先URLまたはAPIキー、マイクの接続状態をご確認ください。</div>
+          </div>
+        `;
       }
     }
 
     async function showAiPoemGuide() {
       const card = HYAKUNIN_ISSHU[currentCardIndex], modal = document.getElementById('aiModal');
       document.getElementById('aiModalTitle').textContent = `✨ 第${card.no}首 読唱指南`;
-      document.getElementById('aiModalContent').innerHTML = `<div class="flex flex-col items-center py-8 space-y-3"><div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div><span class="text-stone-300 text-sm">指南を生成中...</span></div>`;
+      document.getElementById('aiModalContent').innerHTML = `
+        <div class="flex flex-col items-center py-8 space-y-3">
+          <div class="animate-spin rounded-full h-10 w-10 border-b-2 border-indigo-500"></div>
+          <span class="text-stone-300 text-sm font-bold">指南を生成中...</span>
+        </div>
+      `;
       modal.classList.remove('hidden');
+
       try {
-        const payload = { contents: [{ parts: [{ text: `第${card.no}首【${card.kami} / ${card.shimo}】の歌枕・情景と、読手向けの発声ポイント（初声の当て方・余韻の引き方）を分かりやすく解説してください。` }] }] };
-        const res = await callGeminiApi({ model: "gemini-3-flash-preview", payload });
-        document.getElementById('aiModalContent').innerHTML = `<div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed">${res.candidates?.[0]?.content?.parts?.[0]?.text || "指南取得失敗"}</div>`;
-      } catch (err) { document.getElementById('aiModalContent').innerHTML = `<div class="text-red-400 p-4 bg-red-950/50 rounded border border-red-800 text-sm">エラー: ${err.message}</div>`; }
+        const payload = {
+          contents: [{
+            parts: [{
+              text: `あなたは全日本かるた協会のA級公認読手・専任読手の筆頭指導員です。
+第${card.no}首【${card.kami} / ${card.shimo}】（歌人：${card.author}、決まり字：${card.kimari}）について、読手のための専門的な読唱指南を作成してください。
+
+以下の構成で簡潔かつ具体的に教えてください：
+■ 歌の心と情景（読手が心に描くべき空気感）：
+■ 初声（第一音）の立ち上げ方と注意すべき発音：
+■ 上の句から下の句への息継ぎと余韻の引き方：
+■ 読手心得の一言：`
+            }]
+          }]
+        };
+
+        const res = await callGeminiApi({ model: "gemini-2.5-flash", payload });
+        const text = res.candidates?.[0]?.content?.parts?.[0]?.text || "指南テキストの取得に失敗しました。";
+        document.getElementById('aiModalContent').innerHTML = `
+          <div class="bg-stone-800/90 border border-stone-700 p-4 rounded-xl text-stone-100 font-sans text-sm sm:text-base whitespace-pre-wrap leading-relaxed space-y-3">
+            ${text}
+          </div>
+        `;
+      } catch (err) {
+        document.getElementById('aiModalContent').innerHTML = `
+          <div class="text-red-300 p-4 bg-red-950/60 rounded-xl border border-red-800 space-y-2 text-xs sm:text-sm">
+            <div class="font-bold text-red-200 text-sm sm:text-base">⚠️ 指南エラーが発生しました</div>
+            <div>${err.message}</div>
+            <div class="text-stone-400 text-[11px] pt-1 border-t border-red-900/60">※ Cloudflare Workerの中継先URLまたはAPIキーの設定をご確認ください。</div>
+          </div>
+        `;
+      }
     }
 
     function renderCardPickerList() {
