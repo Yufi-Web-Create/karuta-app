@@ -138,15 +138,27 @@
       </div>
     </div>
 
-    <!-- 設定モーダル -->
+    <!-- 設定モーダル（全項目 MAX 7.0秒） -->
     <div id="settingsModal" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center hidden">
       <div class="bg-stone-900 border border-stone-700 w-full max-w-md rounded-t-2xl sm:rounded-2xl p-4 overflow-y-auto max-h-[90vh]">
         <div class="flex justify-between items-center border-b border-stone-800 pb-2 mb-4"><h2 class="text-sm font-bold text-stone-200">読唱秒数・連携設定</h2><button id="closeSettingsBtn" class="text-stone-400 hover:text-white p-1">✕</button></div>
         <div class="space-y-4 text-xs">
-          <div><div class="flex justify-between mb-1"><span class="text-stone-300">上の句 (目標 5.5秒)</span><span id="valKami" class="font-mono text-blue-400">5.5s</span></div><input type="range" id="inputKami" min="4.0" max="7.5" step="0.1" value="5.5" class="w-full accent-blue-500"></div>
-          <div><div class="flex justify-between mb-1"><span class="text-stone-300">余韻 (目標 1.5秒)</span><span id="valYoin" class="font-mono text-emerald-400">1.5s</span></div><input type="range" id="inputYoin" min="0.8" max="2.5" step="0.1" value="1.5" class="w-full accent-emerald-500"></div>
-          <div><div class="flex justify-between mb-1"><span class="text-stone-300">間合い・空時間 (目標 1.0秒)</span><span id="valMaai" class="font-mono text-amber-400">1.0s</span></div><input type="range" id="inputMaai" min="0.5" max="2.0" step="0.1" value="1.0" class="w-full accent-amber-500"></div>
-          <div><div class="flex justify-between mb-1"><span class="text-stone-300">下の句 (目標 5.0秒)</span><span id="valShimo" class="font-mono text-red-400">5.0s</span></div><input type="range" id="inputShimo" min="3.5" max="7.0" step="0.1" value="5.0" class="w-full accent-red-500"></div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-stone-300">上の句 (目標 5.5秒)</span><span id="valKami" class="font-mono text-blue-400">5.5s</span></div>
+            <input type="range" id="inputKami" min="1.0" max="7.0" step="0.1" value="5.5" class="w-full accent-blue-500">
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-stone-300">余韻 (目標 1.5秒)</span><span id="valYoin" class="font-mono text-emerald-400">1.5s</span></div>
+            <input type="range" id="inputYoin" min="0.5" max="7.0" step="0.1" value="1.5" class="w-full accent-emerald-500">
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-stone-300">間合い・空時間 (目標 1.0秒)</span><span id="valMaai" class="font-mono text-amber-400">1.0s</span></div>
+            <input type="range" id="inputMaai" min="0.5" max="7.0" step="0.1" value="1.0" class="w-full accent-amber-500">
+          </div>
+          <div>
+            <div class="flex justify-between mb-1"><span class="text-stone-300">下の句 (目標 5.0秒)</span><span id="valShimo" class="font-mono text-red-400">5.0s</span></div>
+            <input type="range" id="inputShimo" min="1.0" max="7.0" step="0.1" value="5.0" class="w-full accent-red-500">
+          </div>
           <div class="pt-3 border-t border-stone-800 space-y-2">
             <div class="flex justify-between items-center"><span class="text-stone-300 font-semibold">AI接続・中継設定</span><span class="text-[10px] text-emerald-400 bg-emerald-950/70 border border-emerald-800 px-1.5 py-0.5 rounded">中継URL設定済</span></div>
             <div class="space-y-1"><label class="text-[10px] text-stone-400">中継サーバーURL (Cloudflare Worker)</label><input type="text" id="customProxyUrlInput" class="w-full bg-stone-950 border border-stone-700 rounded px-2.5 py-1.5 text-xs text-stone-200 focus:outline-none focus:border-amber-500 font-mono"></div>
@@ -195,7 +207,6 @@
 
     let currentCardIndex = 0, practiceSequence = [...Array(HYAKUNIN_ISSHU.length).keys()], sequenceCursor = 0;
 
-    // 保存済みの秒数設定があれば読み込み、なければ規定値
     let savedTimes = null;
     try { savedTimes = JSON.parse(localStorage.getItem('karuta_target_times')); } catch(e) {}
     let targetTimes = savedTimes || { kami: 5.5, yoin: 1.5, maai: 1.0, shimo: 5.0 };
@@ -533,7 +544,7 @@
       });
     }
 
-    // --- 秒数設定スライダーのリアルタイム同期＆保存処理 ---
+    // --- 秒数設定スライダーのリアルタイム同期＆保存処理（MAX 7.0秒対応） ---
     const inputKami = document.getElementById('inputKami'), valKami = document.getElementById('valKami');
     const inputYoin = document.getElementById('inputYoin'), valYoin = document.getElementById('valYoin');
     const inputMaai = document.getElementById('inputMaai'), valMaai = document.getElementById('valMaai');
