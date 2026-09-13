@@ -51,14 +51,14 @@
           <div id="prevShimoText" class="text-sm font-mincho font-semibold text-stone-700 pl-1">わが衣手は 露にぬれつつ</div>
         </div>
 
-        <!-- 本歌エリア -->
-        <div class="flex justify-around items-stretch h-44 py-1 px-2 z-10">
-          <div class="flex flex-col justify-end text-[11px] font-mincho text-stone-500 writing-vertical py-1 border-l border-stone-300/80 pl-2"><span id="cardAuthor">王仁</span></div>
+        <!-- 本歌エリア：右から左（右：上の句、中央：下の句、左：歌人） -->
+        <div class="flex flex-row-reverse justify-around items-stretch h-44 py-1 px-2 z-10">
           <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="kamiText">難波津に 咲くやこの花</div>
           <div class="flex flex-col justify-start text-base sm:text-lg font-mincho font-bold writing-vertical tracking-widest text-stone-800 transition-colors" id="shimoText">冬ごもり 今を春べと 咲くやこの花</div>
+          <div class="flex flex-col justify-end text-[11px] font-mincho text-stone-500 writing-vertical py-1 border-r border-stone-300/80 pr-2"><span id="cardAuthor">王仁</span></div>
         </div>
 
-        <div id="rakkanStampContainer" class="absolute right-3 top-3 pointer-events-none z-20 hidden"><div id="rakkanStamp" class="rakkan-seal">達人</div></div>
+        <div id="rakkanStampContainer" class="absolute left-3 top-12 pointer-events-none z-20 hidden"><div id="rakkanStamp" class="rakkan-seal">達人</div></div>
         <div class="text-[10px] text-stone-500 text-right tracking-tighter pt-1.5 border-t border-stone-300/60 z-10 flex justify-between items-center"><span id="shuffledCountText" class="text-stone-400">1 / 101首</span><span class="text-stone-500">競技かるた 正式読唱規程</span></div>
       </div>
 
@@ -193,7 +193,6 @@
   </div>
 
   <script>
-    // 小倉百人一首（全100首＋序歌）完全データ
     const RAW_POEMS = [
       ['序', '難波津に 咲くやこの花', '冬ごもり 今を春べと 咲くやこの花', '王仁', '難波津', '序歌', '厳しい冬を耐えて満開に咲く梅の花を讃え、春の訪れを寿ぐ伝統の序歌。', '難波津の入り江に、見事に梅の花が咲いたよ。冬ごもりを経て、今を春だと告げるように花が咲き誇っている。', '「な」の初声は柔らかくかつ芯を持たせ、徐々に息を広げて会場の空気を鎮めます。', '「冬ごもりから覚めたぞ！この調子で100首、喉を温めてまいるのじゃ！」'],
       [1, '秋の田の かりほの庵の 苫をあらみ', 'わが衣手は 露にぬれつつ', '天智天皇', 'あきの', '三字', '粗末な小屋で稲刈りをする農民の苦労に思いを馳せ、民への深い慈愛を詠んだ歌。', '秋の田んぼの仮小屋の屋根の茅の目が粗いので、私の着物の袖は夜露に濡れ続けている。', '「あ」の初声を太く堂々と立ち上げ、天皇の慈悲深い眼差しを表現します。', '「余の袖の濡れ具合に気を取られず、しっかり決まり字を飛ばしてくれよ！」'],
@@ -429,7 +428,6 @@
       }
     }
 
-    // マイクの事前初期化
     async function setupMicrophone() {
       try {
         micStatusText.textContent = '接続中...';
@@ -770,7 +768,6 @@
       });
     }
 
-    // 秒数スライダー連動
     const inputKami = document.getElementById('inputKami'), valKami = document.getElementById('valKami');
     const inputYoin = document.getElementById('inputYoin'), valYoin = document.getElementById('valYoin');
     const inputMaai = document.getElementById('inputMaai'), valMaai = document.getElementById('valMaai');
